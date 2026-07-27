@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BI System - Reports Center</title>
+  <meta name="description" content="BI System Business Intelligence - Reports Center" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="margin:0;padding:0;">
+  <div id="sidebar-root"></div>
+
+  <script src="sidebar.js"></script>
+  <script src="lang-switch.js"></script>
+  <script>
+    var lang = 'en';
+    var activePath = 'reports';
+    injectSidebar({ activePath: activePath, lang: lang });
+
+    (function () {
+      var t = {
+        pageTitle: 'Reports Center',
+        pageSubtitle: 'View, create, and manage all data reports',
+        newReport: 'New Report',
+        search: 'Search reports...',
+        all: 'All Reports',
+        myReports: 'My Reports',
+        shared: 'Shared',
+        favorites: 'Favorites',
+        scheduled: 'Scheduled',
+        name: 'Report Name',
+        type: 'Type',
+        owner: 'Owner',
+        updated: 'Updated',
+        status: 'Status',
+        actions: 'Actions',
+        view: 'View',
+        edit: 'Edit',
+        export: 'Export',
+        published: 'Published',
+        draft: 'Draft',
+        archived: 'Archived'
+      };
+
+      document.title = 'BI System - Reports Center';
+
+      var reports = [
+        { id: 'RPT-001', name: 'Monthly Business Analysis', type: 'Overview', owner: 'John Zhang', updated: '2024-01-30 15:42', status: 'published', desc: 'Comprehensive monthly analysis covering revenue, users, and orders' },
+        { id: 'RPT-002', name: 'Sales Performance Ranking', type: 'Sales', owner: 'Emily Li', updated: '2024-01-30 11:20', status: 'published', desc: 'Multi-dimensional sales ranking by region, product, and personnel' },
+        { id: 'RPT-003', name: 'User Behavior Funnel', type: 'Analytics', owner: 'Sarah Wang', updated: '2024-01-29 18:05', status: 'published', desc: 'Full-path funnel analysis from visit to conversion' },
+        { id: 'RPT-004', name: 'Channel Campaign ROI', type: 'Marketing', owner: 'Michael Zhao', updated: '2024-01-29 14:30', status: 'draft', desc: 'ROI, CAC, and conversion rate comparison across ad channels' },
+        { id: 'RPT-005', name: 'Inventory Turnover Weekly', type: 'Operations', owner: 'Lisa Sun', updated: '2024-01-28 09:15', status: 'published', desc: 'Inventory turnover rate, slow-moving items alerts, restocking suggestions' },
+        { id: 'RPT-006', name: 'Customer Satisfaction Analysis', type: 'Analytics', owner: 'Jay Zhou', updated: '2024-01-27 16:48', status: 'published', desc: 'NPS score, CSAT, and complaint reason analysis' },
+        { id: 'RPT-007', name: 'Monthly Financial Statement', type: 'Finance', owner: 'Mindy Wu', updated: '2024-01-26 10:00', status: 'published', desc: 'Revenue, cost, profit, and cash flow summary' },
+        { id: 'RPT-008', name: '2024 Strategic Plan', type: 'Overview', owner: 'William Zheng', updated: '2024-01-25 11:30', status: 'draft', desc: 'Annual goals breakdown, quarterly milestones, resource allocation' }
+      ];
+
+      var statusMap = {
+        published: { label: 'Published', cls: 'badge-success', icon: 'fa-check-circle' },
+        draft: { label: 'Draft', cls: 'badge-warning', icon: 'fa-edit' },
+        archived: { label: 'Archived', cls: 'badge-default', icon: 'fa-archive' }
+      };
+
+      var typeIcons = {
+        'Overview': 'fa-chart-pie',
+        'Sales': 'fa-dollar-sign',
+        'Analytics': 'fa-chart-line',
+        'Marketing': 'fa-bullhorn',
+        'Operations': 'fa-cogs',
+        'Finance': 'fa-file-invoice-dollar'
+      };
+
+      var contentEl = document.getElementById('page-content');
+      var html = '';
+
+      html += '<div class="page-header">';
+      html += '  <div>';
+      html += '    <h1>' + t.pageTitle + '</h1>';
+      html += '    <p>' + t.pageSubtitle + '</p>';
+      html += '  </div>';
+      html += '  <div class="flex gap-3">';
+      html += '    <div class="search-box">';
+      html += '      <i class="fas fa-search"></i>';
+      html += '      <input type="text" placeholder="' + t.search + '" />';
+      html += '    </div>';
+      html += '    <button class="btn btn-primary"><i class="fas fa-plus"></i> ' + t.newReport + '</button>';
+      html += '  </div>';
+      html += '</div>';
+
+      html += '<div class="card" style="margin-bottom:20px;">';
+      html += '  <div class="tabs">';
+      html += '    <div class="tab active">' + t.all + ' <span style="color:#94A3B8;margin-left:4px;">8</span></div>';
+      html += '    <div class="tab">' + t.myReports + ' <span style="color:#94A3B8;margin-left:4px;">5</span></div>';
+      html += '    <div class="tab">' + t.shared + ' <span style="color:#94A3B8;margin-left:4px;">3</span></div>';
+      html += '    <div class="tab"><i class="far fa-star" style="margin-right:4px;"></i>' + t.favorites + '</div>';
+      html += '    <div class="tab"><i class="far fa-clock" style="margin-right:4px;"></i>' + t.scheduled + '</div>';
+      html += '  </div>';
+      html += '</div>';
+
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">';
+      reports.forEach(function (r) {
+        var s = statusMap[r.status];
+        var icon = typeIcons[r.type] || 'fa-file-alt';
+        html += '<div class="card" style="transition:all .2s ease;cursor:pointer;" onmouseover="this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'0 1px 2px 0 rgba(0,0,0,0.03)\'">';
+        html += '  <div class="card-body">';
+        html += '    <div class="flex items-center justify-between" style="margin-bottom:12px;">';
+        html += '      <div style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#EFF6FF;color:#3B82F6;font-size:18px;">';
+        html += '        <i class="fas ' + icon + '"></i>';
+        html += '      </div>';
+        html += '      <span class="badge ' + s.cls + '"><i class="fas ' + s.icon + '" style="font-size:10px;"></i> ' + s.label + '</span>';
+        html += '    </div>';
+        html += '    <h3 style="font-size:15px;font-weight:600;margin:0 0 6px;color:#0F172A;">' + r.name + '</h3>';
+        html += '    <p style="font-size:13px;color:#64748B;margin:0 0 16px;line-height:1.5;min-height:40px;">' + r.desc + '</p>';
+        html += '    <div class="flex items-center justify-between" style="padding-top:14px;border-top:1px solid #F1F5F9;">';
+        html += '      <div style="display:flex;align-items:center;gap:8px;">';
+        html += '        <div class="avatar" style="width:24px;height:24px;font-size:10px;">' + r.owner.charAt(0) + '</div>';
+        html += '        <span style="font-size:12px;color:#64748B;">' + r.owner + '</span>';
+        html += '      </div>';
+        html += '      <span style="font-size:11px;color:#94A3B8;" class="mono">' + r.updated + '</span>';
+        html += '    </div>';
+        html += '    <div style="display:flex;gap:8px;margin-top:14px;">';
+        html += '      <button class="btn btn-secondary btn-sm" style="flex:1;"><i class="far fa-eye"></i> ' + t.view + '</button>';
+        html += '      <button class="btn btn-secondary btn-sm" style="flex:1;"><i class="fas fa-download"></i> ' + t.export + '</button>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      contentEl.innerHTML = html;
+    })();
+  </script>
+</body>
+</html>

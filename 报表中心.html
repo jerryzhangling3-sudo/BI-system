@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BI System - 报表中心</title>
+  <meta name="description" content="BI System 商业智能平台 - 报表中心" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="margin:0;padding:0;">
+  <div id="sidebar-root"></div>
+
+  <script src="sidebar.js"></script>
+  <script src="lang-switch.js"></script>
+  <script>
+    var lang = 'zh';
+    var activePath = 'reports';
+    injectSidebar({ activePath: activePath, lang: lang });
+
+    (function () {
+      var t = {
+        pageTitle: '报表中心',
+        pageSubtitle: '查看、创建和管理所有数据报表',
+        newReport: '新建报表',
+        search: '搜索报表...',
+        all: '全部',
+        myReports: '我的报表',
+        shared: '共享报表',
+        favorites: '收藏夹',
+        scheduled: '定时报表',
+        name: '报表名称',
+        type: '类型',
+        owner: '创建人',
+        updated: '更新时间',
+        status: '状态',
+        actions: '操作',
+        view: '查看',
+        edit: '编辑',
+        export: '导出',
+        published: '已发布',
+        draft: '草稿',
+        archived: '已归档'
+      };
+
+      document.title = 'BI System - 报表中心';
+
+      var reports = [
+        { id: 'RPT-001', name: '月度经营分析报告', type: '综合报表', owner: '张明', updated: '2024-01-30 15:42', status: 'published', desc: '涵盖收入、用户、订单等核心指标的月度综合分析' },
+        { id: 'RPT-002', name: '销售业绩排行榜', type: '销售报表', owner: '李华', updated: '2024-01-30 11:20', status: 'published', desc: '按区域、产品、人员多维度的销售业绩排名' },
+        { id: 'RPT-003', name: '用户行为漏斗分析', type: '分析报表', owner: '王芳', updated: '2024-01-29 18:05', status: 'published', desc: '用户从访问到转化的全路径漏斗分析' },
+        { id: 'RPT-004', name: '渠道投放效果分析', type: '营销报表', owner: '赵强', updated: '2024-01-29 14:30', status: 'draft', desc: '各广告渠道ROI、获客成本、转化率对比分析' },
+        { id: 'RPT-005', name: '库存周转周报', type: '运营报表', owner: '孙丽', updated: '2024-01-28 09:15', status: 'published', desc: '各品类库存周转率、滞销品预警、补货建议' },
+        { id: 'RPT-006', name: '客户满意度分析', type: '分析报表', owner: '周杰', updated: '2024-01-27 16:48', status: 'published', desc: 'NPS评分、客服满意度、投诉原因分析' },
+        { id: 'RPT-007', name: '财务月度结算表', type: '财务报表', owner: '吴敏', updated: '2024-01-26 10:00', status: 'published', desc: '收入、成本、利润、现金流等财务指标汇总' },
+        { id: 'RPT-008', name: '2024年度战略规划', type: '综合报表', owner: '郑伟', updated: '2024-01-25 11:30', status: 'draft', desc: '年度目标拆解、季度里程碑、资源分配规划' }
+      ];
+
+      var statusMap = {
+        published: { label: '已发布', cls: 'badge-success', icon: 'fa-check-circle' },
+        draft: { label: '草稿', cls: 'badge-warning', icon: 'fa-edit' },
+        archived: { label: '已归档', cls: 'badge-default', icon: 'fa-archive' }
+      };
+
+      var typeIcons = {
+        '综合报表': 'fa-chart-pie',
+        '销售报表': 'fa-dollar-sign',
+        '分析报表': 'fa-chart-line',
+        '营销报表': 'fa-bullhorn',
+        '运营报表': 'fa-cogs',
+        '财务报表': 'fa-file-invoice-dollar'
+      };
+
+      var contentEl = document.getElementById('page-content');
+      var html = '';
+
+      // 页头
+      html += '<div class="page-header">';
+      html += '  <div>';
+      html += '    <h1>' + t.pageTitle + '</h1>';
+      html += '    <p>' + t.pageSubtitle + '</p>';
+      html += '  </div>';
+      html += '  <div class="flex gap-3">';
+      html += '    <div class="search-box">';
+      html += '      <i class="fas fa-search"></i>';
+      html += '      <input type="text" placeholder="' + t.search + '" />';
+      html += '    </div>';
+      html += '    <button class="btn btn-primary"><i class="fas fa-plus"></i> ' + t.newReport + '</button>';
+      html += '  </div>';
+      html += '</div>';
+
+      // 分类标签
+      html += '<div class="card" style="margin-bottom:20px;">';
+      html += '  <div class="tabs">';
+      html += '    <div class="tab active">' + t.all + ' <span style="color:#94A3B8;margin-left:4px;">8</span></div>';
+      html += '    <div class="tab">' + t.myReports + ' <span style="color:#94A3B8;margin-left:4px;">5</span></div>';
+      html += '    <div class="tab">' + t.shared + ' <span style="color:#94A3B8;margin-left:4px;">3</span></div>';
+      html += '    <div class="tab"><i class="far fa-star" style="margin-right:4px;"></i>' + t.favorites + '</div>';
+      html += '    <div class="tab"><i class="far fa-clock" style="margin-right:4px;"></i>' + t.scheduled + '</div>';
+      html += '  </div>';
+      html += '</div>';
+
+      // 报表卡片网格
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">';
+      reports.forEach(function (r) {
+        var s = statusMap[r.status];
+        var icon = typeIcons[r.type] || 'fa-file-alt';
+        html += '<div class="card" style="transition:all .2s ease;cursor:pointer;" onmouseover="this.style.boxShadow=\'0 8px 24px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'0 1px 2px 0 rgba(0,0,0,0.03)\'">';
+        html += '  <div class="card-body">';
+        html += '    <div class="flex items-center justify-between" style="margin-bottom:12px;">';
+        html += '      <div class="kpi-icon blue" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#EFF6FF;color:#3B82F6;font-size:18px;">';
+        html += '        <i class="fas ' + icon + '"></i>';
+        html += '      </div>';
+        html += '      <span class="badge ' + s.cls + '"><i class="fas ' + s.icon + '" style="font-size:10px;"></i> ' + s.label + '</span>';
+        html += '    </div>';
+        html += '    <h3 style="font-size:15px;font-weight:600;margin:0 0 6px;color:#0F172A;">' + r.name + '</h3>';
+        html += '    <p style="font-size:13px;color:#64748B;margin:0 0 16px;line-height:1.5;min-height:40px;">' + r.desc + '</p>';
+        html += '    <div class="flex items-center justify-between" style="padding-top:14px;border-top:1px solid #F1F5F9;">';
+        html += '      <div style="display:flex;align-items:center;gap:8px;">';
+        html += '        <div class="avatar" style="width:24px;height:24px;font-size:10px;">' + r.owner.charAt(0) + '</div>';
+        html += '        <span style="font-size:12px;color:#64748B;">' + r.owner + '</span>';
+        html += '      </div>';
+        html += '      <span style="font-size:11px;color:#94A3B8;" class="mono">' + r.updated + '</span>';
+        html += '    </div>';
+        html += '    <div style="display:flex;gap:8px;margin-top:14px;">';
+        html += '      <button class="btn btn-secondary btn-sm" style="flex:1;"><i class="far fa-eye"></i> ' + t.view + '</button>';
+        html += '      <button class="btn btn-secondary btn-sm" style="flex:1;"><i class="fas fa-download"></i> ' + t.export + '</button>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      contentEl.innerHTML = html;
+    })();
+  </script>
+</body>
+</html>

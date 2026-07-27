@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BI System - 总览仪表盘</title>
+  <meta name="description" content="BI System 商业智能平台 - 总览仪表盘" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Tailwind CSS CDN (utility classes) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="margin:0;padding:0;">
+  <div id="sidebar-root"></div>
+
+  <script src="sidebar.js"></script>
+  <script src="lang-switch.js"></script>
+  <script>
+    // 注入侧边栏和顶栏
+    var lang = getCurrentLang();
+    var activePath = 'index';
+    injectSidebar({ activePath: activePath, lang: lang });
+
+    // 注入页面内容到 #page-content
+    (function () {
+      var t = {
+        zh: {
+          pageTitle: '总览仪表盘',
+          pageSubtitle: '实时监控业务核心指标，洞察增长机会',
+          dateRange: '2024年1月1日 - 2024年1月31日',
+          dateLabel: '日期范围',
+          exportBtn: '导出报告',
+          refreshBtn: '刷新数据',
+          // KPIs
+          kpiRevenue: '总收入',
+          kpiUsers: '活跃用户',
+          kpiConversion: '转化率',
+          kpiOrders: '订单量',
+          vsLastMonth: '较上月',
+          // Charts
+          revenueTrend: '收入趋势',
+          revenueTrendSub: '过去30天每日收入变化',
+          channelShare: '渠道占比',
+          channelShareSub: '各渠道收入贡献',
+          regionRank: '地区排行',
+          regionRankSub: '按收入排名 Top 10 地区',
+          conversionFunnel: '转化漏斗',
+          conversionFunnelSub: '从访问到支付的转化路径',
+          recentAnomalies: '最近异常',
+          recentAnomaliesSub: '系统自动检测的数据异常',
+          // Funnel
+          funnelVisit: '页面访问',
+          funnelRegister: '注册用户',
+          funnelActive: '活跃用户',
+          funnelOrder: '下单用户',
+          funnelPay: '支付用户',
+          // Anomaly
+          viewAll: '查看全部',
+          // Table
+          orderId: '订单号',
+          customer: '客户',
+          amount: '金额',
+          status: '状态',
+          time: '时间',
+          statusSuccess: '已完成',
+          statusPending: '处理中',
+          statusFailed: '已失败',
+          statusRefund: '已退款'
+        },
+        en: {
+          pageTitle: 'Overview Dashboard',
+          pageSubtitle: 'Monitor core business metrics in real-time',
+          dateRange: 'Jan 1 - Jan 31, 2024',
+          dateLabel: 'Date Range',
+          exportBtn: 'Export Report',
+          refreshBtn: 'Refresh',
+          kpiRevenue: 'Total Revenue',
+          kpiUsers: 'Active Users',
+          kpiConversion: 'Conversion Rate',
+          kpiOrders: 'Total Orders',
+          vsLastMonth: 'vs last month',
+          revenueTrend: 'Revenue Trend',
+          revenueTrendSub: 'Daily revenue over the past 30 days',
+          channelShare: 'Channel Share',
+          channelShareSub: 'Revenue contribution by channel',
+          regionRank: 'Region Ranking',
+          regionRankSub: 'Top 10 regions by revenue',
+          conversionFunnel: 'Conversion Funnel',
+          conversionFunnelSub: 'From visit to payment',
+          recentAnomalies: 'Recent Anomalies',
+          recentAnomaliesSub: 'System-detected data anomalies',
+          funnelVisit: 'Page Visits',
+          funnelRegister: 'Registered Users',
+          funnelActive: 'Active Users',
+          funnelOrder: 'Ordered Users',
+          funnelPay: 'Paid Users',
+          viewAll: 'View All',
+          orderId: 'Order ID',
+          customer: 'Customer',
+          amount: 'Amount',
+          status: 'Status',
+          time: 'Time',
+          statusSuccess: 'Completed',
+          statusPending: 'Pending',
+          statusFailed: 'Failed',
+          statusRefund: 'Refunded'
+        }
+      }[lang] || {};
+
+      // 更新页面标题
+      document.title = lang === 'zh' ? 'BI System - 总览仪表盘' : 'BI System - Overview Dashboard';
+
+      var contentEl = document.getElementById('page-content');
+      if (!contentEl) return;
+
+      var html = '';
+
+      // 页面头部
+      html += '<div class="page-header">';
+      html += '  <div>';
+      html += '    <h1>' + t.pageTitle + '</h1>';
+      html += '    <p>' + t.pageSubtitle + '</p>';
+      html += '  </div>';
+      html += '  <div class="filter-bar" style="margin-bottom:0;">';
+      html += '    <div class="date-picker">';
+      html += '      <i class="far fa-calendar-alt"></i>';
+      html += '      <span>' + t.dateRange + '</span>';
+      html += '    </div>';
+      html += '    <button class="btn btn-secondary btn-sm"><i class="fas fa-sync-alt"></i> ' + t.refreshBtn + '</button>';
+      html += '    <button class="btn btn-primary btn-sm"><i class="fas fa-download"></i> ' + t.exportBtn + '</button>';
+      html += '  </div>';
+      html += '</div>';
+
+      // KPI 卡片
+      html += '<div class="kpi-grid">';
+      html += buildKpiCard({
+        icon: 'fa-dollar-sign',
+        iconColor: 'blue',
+        label: t.kpiRevenue,
+        value: '¥ 2,847,392',
+        trend: '+12.5%',
+        trendDir: 'up',
+        sub: t.vsLastMonth
+      });
+      html += buildKpiCard({
+        icon: 'fa-users',
+        iconColor: 'green',
+        label: t.kpiUsers,
+        value: '48,291',
+        trend: '+8.3%',
+        trendDir: 'up',
+        sub: t.vsLastMonth
+      });
+      html += buildKpiCard({
+        icon: 'fa-percentage',
+        iconColor: 'purple',
+        label: t.kpiConversion,
+        value: '3.42%',
+        trend: '-0.8%',
+        trendDir: 'down',
+        sub: t.vsLastMonth
+      });
+      html += buildKpiCard({
+        icon: 'fa-shopping-cart',
+        iconColor: 'orange',
+        label: t.kpiOrders,
+        value: '12,847',
+        trend: '+15.2%',
+        trendDir: 'up',
+        sub: t.vsLastMonth
+      });
+      html += '</div>';
+
+      // 图表行：收入趋势 + 渠道占比
+      html += '<div class="chart-grid">';
+      html += '  <div class="card">';
+      html += '    <div class="card-header">';
+      html += '      <div>';
+      html += '        <h3 class="card-title">' + t.revenueTrend + '</h3>';
+      html += '        <div class="card-subtitle">' + t.revenueTrendSub + '</div>';
+      html += '      </div>';
+      html += '      <div class="flex gap-2">';
+      html += '        <button class="btn btn-secondary btn-sm">7D</button>';
+      html += '        <button class="btn btn-primary btn-sm">30D</button>';
+      html += '        <button class="btn btn-secondary btn-sm">90D</button>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '    <div class="card-body">';
+      html += '      <div class="chart-container">';
+      html += buildLineChart();
+      html += '      </div>';
+      html += '    </div>';
+      html += '  </div>';
+
+      html += '  <div class="card">';
+      html += '    <div class="card-header">';
+      html += '      <div>';
+      html += '        <h3 class="card-title">' + t.channelShare + '</h3>';
+      html += '        <div class="card-subtitle">' + t.channelShareSub + '</div>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '    <div class="card-body">';
+      html += buildDonutChart(lang);
+      html += '    </div>';
+      html += '  </div>';
+      html += '</div>';
+
+      // 第二行：地区排行 + 转化漏斗
+      html += '<div class="chart-grid">';
+      html += '  <div class="card">';
+      html += '    <div class="card-header">';
+      html += '      <div>';
+      html += '        <h3 class="card-title">' + t.regionRank + '</h3>';
+      html += '        <div class="card-subtitle">' + t.regionRankSub + '</div>';
+      html += '      </div>';
+      html += '      <button class="btn btn-secondary btn-sm">' + t.viewAll + ' <i class="fas fa-chevron-right" style="margin-left:4px;font-size:10px;"></i></button>';
+      html += '    </div>';
+      html += '    <div class="card-body">';
+      html += buildRegionRank(lang);
+      html += '    </div>';
+      html += '  </div>';
+
+      html += '  <div class="card">';
+      html += '    <div class="card-header">';
+      html += '      <div>';
+      html += '        <h3 class="card-title">' + t.conversionFunnel + '</h3>';
+      html += '        <div class="card-subtitle">' + t.conversionFunnelSub + '</div>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '    <div class="card-body">';
+      html += buildFunnelChart(lang, t);
+      html += '    </div>';
+      html += '  </div>';
+      html += '</div>';
+
+      // 第三行：最近异常 + 最近订单
+      html += '<div class="chart-grid">';
+      html += '  <div class="card">';
+      html += '    <div class="card-header">';
+      html += '      <div>';
+      html += '        <h3 class="card-title">' + t.recentAnomalies + '</h3>';
+      html += '        <div class="card-subtitle">' + t.recentAnomaliesSub + '</div>';
+      html += '      </div>';
+      html += '      <span class="badge badge-danger">5 ' + (lang === 'zh' ? '条待处理' : 'pending') + '</span>';
+      html += '    </div>';
+      html += '    <div class="card-body">';
+      html += buildAnomalyList(lang);
+      html += '    </div>';
+      html += '  </div>';
+
+      html += '  <div class="card">';
+      html += '    <div class="card-header">';
+      html += '      <div>';
+      html += '        <h3 class="card-title">' + (lang === 'zh' ? '最近订单' : 'Recent Orders') + '</h3>';
+      html += '        <div class="card-subtitle">' + (lang === 'zh' ? '最新的订单动态' : 'Latest order activities') + '</div>';
+      html += '      </div>';
+      html += '      <button class="btn btn-secondary btn-sm">' + t.viewAll + ' <i class="fas fa-chevron-right" style="margin-left:4px;font-size:10px;"></i></button>';
+      html += '    </div>';
+      html += '    <div class="card-body" style="padding:0;">';
+      html += buildOrderTable(lang, t);
+      html += '    </div>';
+      html += '  </div>';
+      html += '</div>';
+
+      contentEl.innerHTML = html;
+    })();
+
+    // ===== 组件构建函数 =====
+
+    function buildKpiCard(data) {
+      return '<div class="kpi-card">' +
+        '<div class="kpi-top">' +
+        '  <div class="kpi-icon ' + data.iconColor + '"><i class="fas ' + data.icon + '"></i></div>' +
+        '  <span class="kpi-trend ' + data.trendDir + '">' +
+        '    <i class="fas fa-arrow-' + (data.trendDir === 'up' ? 'up' : 'down') + '"></i> ' + data.trend +
+        '  </span>' +
+        '</div>' +
+        '<div class="kpi-label">' + data.label + '</div>' +
+        '<div class="kpi-value mono">' + data.value + '</div>' +
+        '<div class="kpi-trend-sub">' + data.sub + '</div>' +
+        '</div>';
+    }
+
+    // 收入趋势折线图 (SVG)
+    function buildLineChart() {
+      // 30天模拟数据
+      var data = [
+        42000, 45000, 48000, 52000, 49000, 55000, 58000,
+        62000, 59000, 65000, 68000, 72000, 70000, 75000,
+        78000, 82000, 85000, 80000, 88000, 92000, 95000,
+        90000, 98000, 102000, 105000, 100000, 108000, 112000,
+        115000, 120000
+      ];
+      var w = 700, h = 260, pad = { top: 20, right: 20, bottom: 30, left: 50 };
+      var cw = w - pad.left - pad.right;
+      var ch = h - pad.top - pad.bottom;
+      var max = Math.max.apply(null, data) * 1.1;
+      var min = 0;
+
+      var points = data.map(function (v, i) {
+        var x = pad.left + (i / (data.length - 1)) * cw;
+        var y = pad.top + ch - ((v - min) / (max - min)) * ch;
+        return [x, y];
+      });
+
+      // 路径
+      var pathD = points.map(function (p, i) {
+        return (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1);
+      }).join(' ');
+
+      // 面积填充路径
+      var areaD = pathD +
+        ' L' + points[points.length - 1][0].toFixed(1) + ',' + (pad.top + ch) +
+        ' L' + points[0][0].toFixed(1) + ',' + (pad.top + ch) + ' Z';
+
+      // Y 轴刻度
+      var yTicks = '';
+      var yLabels = [0, 30000, 60000, 90000, 120000];
+      yLabels.forEach(function (v) {
+        var y = pad.top + ch - (v / max) * ch;
+        yTicks += '<line x1="' + pad.left + '" y1="' + y.toFixed(1) + '" x2="' + (w - pad.right) + '" y2="' + y.toFixed(1) + '" stroke="#F1F5F9" stroke-width="1" stroke-dasharray="3,3"/>';
+        yTicks += '<text x="' + (pad.left - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" fill="#94A3B8" font-size="11" font-family="ui-monospace, monospace">' + (v >= 1000 ? (v / 1000) + 'k' : v) + '</text>';
+      });
+
+      // X 轴刻度 (每5天)
+      var xTicks = '';
+      var xLabels = ['1日', '5日', '10日', '15日', '20日', '25日', '30日'];
+      [0, 4, 9, 14, 19, 24, 29].forEach(function (idx, i) {
+        var x = pad.left + (idx / (data.length - 1)) * cw;
+        xTicks += '<text x="' + x.toFixed(1) + '" y="' + (h - pad.bottom + 18) + '" text-anchor="middle" fill="#94A3B8" font-size="11">' + xLabels[i] + '</text>';
+      });
+
+      // 最后一个数据点高亮
+      var last = points[points.length - 1];
+      var dot = '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="5" fill="#fff" stroke="#3B82F6" stroke-width="2"/>';
+
+      return '<svg class="chart-svg" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="xMidYMid meet">' +
+        '<defs><linearGradient id="lineGrad" x1="0" x2="0" y1="0" y2="1">' +
+        '<stop offset="0%" stop-color="#3B82F6" stop-opacity="0.3"/>' +
+        '<stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>' +
+        '</linearGradient></defs>' +
+        yTicks +
+        xTicks +
+        '<path d="' + areaD + '" fill="url(#lineGrad)"/>' +
+        '<path d="' + pathD + '" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        dot +
+        '</svg>';
+    }
+
+    // 渠道占比环形图
+    function buildDonutChart(lang) {
+      var channels = lang === 'zh'
+        ? [
+            { name: '自然搜索', value: 38, color: '#3B82F6' },
+            { name: '社交媒体', value: 25, color: '#8B5CF6' },
+            { name: '直接访问', value: 20, color: '#10B981' },
+            { name: '付费广告', value: 12, color: '#F59E0B' },
+            { name: '其他渠道', value: 5, color: '#94A3B8' }
+          ]
+        : [
+            { name: 'Organic Search', value: 38, color: '#3B82F6' },
+            { name: 'Social Media', value: 25, color: '#8B5CF6' },
+            { name: 'Direct Traffic', value: 20, color: '#10B981' },
+            { name: 'Paid Ads', value: 12, color: '#F59E0B' },
+            { name: 'Other', value: 5, color: '#94A3B8' }
+          ];
+
+      var cx = 80, cy = 80, r = 65, innerR = 45;
+      var total = channels.reduce(function (s, c) { return s + c.value; }, 0);
+      var startAngle = -Math.PI / 2;
+
+      var arcs = '';
+      channels.forEach(function (ch) {
+        var angle = (ch.value / total) * Math.PI * 2;
+        var endAngle = startAngle + angle;
+        var largeArc = angle > Math.PI ? 1 : 0;
+
+        var x1 = cx + r * Math.cos(startAngle);
+        var y1 = cy + r * Math.sin(startAngle);
+        var x2 = cx + r * Math.cos(endAngle);
+        var y2 = cy + r * Math.sin(endAngle);
+
+        var ix1 = cx + innerR * Math.cos(endAngle);
+        var iy1 = cy + innerR * Math.sin(endAngle);
+        var ix2 = cx + innerR * Math.cos(startAngle);
+        var iy2 = cy + innerR * Math.sin(startAngle);
+
+        var d = 'M' + x1.toFixed(2) + ',' + y1.toFixed(2) +
+          ' A' + r + ',' + r + ' 0 ' + largeArc + ' 1 ' + x2.toFixed(2) + ',' + y2.toFixed(2) +
+          ' L' + ix1.toFixed(2) + ',' + iy1.toFixed(2) +
+          ' A' + innerR + ',' + innerR + ' 0 ' + largeArc + ' 0 ' + ix2.toFixed(2) + ',' + iy2.toFixed(2) +
+          ' Z';
+
+        arcs += '<path d="' + d + '" fill="' + ch.color + '"/>';
+        startAngle = endAngle;
+      });
+
+      var svg = '<svg class="donut-svg" width="160" height="160" viewBox="0 0 160 160">' +
+        arcs +
+        '<text x="80" y="74" text-anchor="middle" fill="#64748B" font-size="12">' + (lang === 'zh' ? '总收入' : 'Total') + '</text>' +
+        '<text x="80" y="94" text-anchor="middle" fill="#0F172A" font-size="18" font-weight="700" font-family="ui-monospace, monospace">¥2.85M</text>' +
+        '</svg>';
+
+      var legend = '<ul class="legend-list">';
+      channels.forEach(function (ch) {
+        legend += '<li class="legend-item">' +
+          '<span class="legend-dot" style="background:' + ch.color + '"></span>' +
+          '<span class="legend-label">' + ch.name + '</span>' +
+          '<span class="legend-value mono">' + ch.value + '%</span>' +
+          '</li>';
+      });
+      legend += '</ul>';
+
+      return '<div class="donut-wrap">' + svg + legend + '</div>';
+    }
+
+    // 地区排行
+    function buildRegionRank(lang) {
+      var regions = lang === 'zh'
+        ? [
+            { name: '广东省', value: 485200 },
+            { name: '北京市', value: 412800 },
+            { name: '上海市', value: 389500 },
+            { name: '浙江省', value: 342100 },
+            { name: '江苏省', value: 298700 },
+            { name: '四川省', value: 215400 },
+            { name: '湖北省', value: 187600 },
+            { name: '山东省', value: 156300 }
+          ]
+        : [
+            { name: 'Guangdong', value: 485200 },
+            { name: 'Beijing', value: 412800 },
+            { name: 'Shanghai', value: 389500 },
+            { name: 'Zhejiang', value: 342100 },
+            { name: 'Jiangsu', value: 298700 },
+            { name: 'Sichuan', value: 215400 },
+            { name: 'Hubei', value: 187600 },
+            { name: 'Shandong', value: 156300 }
+          ];
+
+      var max = regions[0].value;
+      var html = '<ul class="rank-list">';
+      regions.forEach(function (r, i) {
+        var rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+        var pct = (r.value / max * 100).toFixed(1);
+        var valStr = '¥' + (r.value / 10000).toFixed(1) + '万';
+        if (lang === 'en') valStr = '¥' + (r.value / 1000).toFixed(0) + 'K';
+        html += '<li class="rank-item">' +
+          '<span class="rank-num ' + rankClass + '">' + (i + 1) + '</span>' +
+          '<span class="rank-name">' + r.name + '</span>' +
+          '<div class="rank-bar-wrap"><div class="rank-bar" style="width:' + pct + '%"></div></div>' +
+          '<span class="rank-value mono">' + valStr + '</span>' +
+          '</li>';
+      });
+      html += '</ul>';
+      return html;
+    }
+
+    // 转化漏斗
+    function buildFunnelChart(lang, t) {
+      var funnel = [
+        { label: t.funnelVisit, value: 284500, rate: '100%', color: '#3B82F6' },
+        { label: t.funnelRegister, value: 85350, rate: '30%', color: '#6366F1' },
+        { label: t.funnelActive, value: 48291, rate: '56.6%', color: '#8B5CF6' },
+        { label: t.funnelOrder, value: 21476, rate: '44.5%', color: '#A855F7' },
+        { label: t.funnelPay, value: 12847, rate: '59.8%', color: '#10B981' }
+      ];
+
+      var max = funnel[0].value;
+      var html = '';
+      funnel.forEach(function (f) {
+        var widthPct = (f.value / max * 100).toFixed(1);
+        var valStr = f.value.toLocaleString();
+        html += '<div class="funnel-item">' +
+          '<div class="funnel-label">' + f.label + '</div>' +
+          '<div class="funnel-bar-wrap">' +
+          '  <div class="funnel-bar" style="width:' + widthPct + '%;background:' + f.color + ';">' + valStr + '</div>' +
+          '</div>' +
+          '<div class="funnel-value mono">' + valStr + '</div>' +
+          '<div class="funnel-rate">' + f.rate + '</div>' +
+          '</div>';
+      });
+      return html;
+    }
+
+    // 异常列表
+    function buildAnomalyList(lang) {
+      var anomalies = lang === 'zh'
+        ? [
+            { level: 'danger', icon: 'fa-exclamation-triangle', title: '华东区订单量骤降 35%', desc: '检测到过去24小时内华东地区订单量异常下降', time: '10分钟前' },
+            { level: 'warning', icon: 'fa-chart-line', title: '平均客单价波动异常', desc: '移动端客单价较昨日上涨 18%，建议关注', time: '1小时前' },
+            { level: 'danger', icon: 'fa-server', title: '支付接口响应超时', desc: '第三方支付通道 3 号节点连续 5 次超时', time: '2小时前' },
+            { level: 'info', icon: 'fa-bolt', title: '新增用户数创本周新高', desc: '今日新增注册用户较日均增长 42%', time: '3小时前' },
+            { level: 'warning', icon: 'fa-exclamation-circle', title: '退款率略高于阈值', desc: '数码类产品退款率达 4.2%，超过 3% 预警线', time: '5小时前' }
+          ]
+        : [
+            { level: 'danger', icon: 'fa-exclamation-triangle', title: 'East China orders dropped 35%', desc: 'Abnormal drop detected in East China region in past 24h', time: '10m ago' },
+            { level: 'warning', icon: 'fa-chart-line', title: 'AOV fluctuation abnormal', desc: 'Mobile AOV up 18% vs yesterday, recommend review', time: '1h ago' },
+            { level: 'danger', icon: 'fa-server', title: 'Payment gateway timeout', desc: 'Payment channel node 3 timed out 5 times in a row', time: '2h ago' },
+            { level: 'info', icon: 'fa-bolt', title: 'New users hit weekly high', desc: 'New registrations up 42% vs daily average', time: '3h ago' },
+            { level: 'warning', icon: 'fa-exclamation-circle', title: 'Refund rate slightly above threshold', desc: 'Electronics refund rate at 4.2%, exceeds 3% threshold', time: '5h ago' }
+          ];
+
+      var html = '';
+      anomalies.forEach(function (a) {
+        html += '<div class="anomaly-item">' +
+          '<div class="anomaly-icon ' + a.level + '"><i class="fas ' + a.icon + '"></i></div>' +
+          '<div class="anomaly-content">' +
+          '  <div class="anomaly-title">' + a.title + '</div>' +
+          '  <div class="anomaly-desc">' + a.desc + '</div>' +
+          '</div>' +
+          '<div class="anomaly-time mono">' + a.time + '</div>' +
+          '</div>';
+      });
+      return html;
+    }
+
+    // 最近订单表
+    function buildOrderTable(lang, t) {
+      var orders = lang === 'zh'
+        ? [
+            { id: 'ORD-20240131-8842', customer: '星辰科技有限公司', amount: 28500, status: 'success', time: '2024-01-31 14:32' },
+            { id: 'ORD-20240131-8841', customer: '云帆数字传媒', amount: 12800, status: 'pending', time: '2024-01-31 13:18' },
+            { id: 'ORD-20240131-8840', customer: '智远咨询集团', amount: 45200, status: 'success', time: '2024-01-31 11:45' },
+            { id: 'ORD-20240131-8839', customer: '瑞恒医疗科技', amount: 8900, status: 'refund', time: '2024-01-31 10:22' },
+            { id: 'ORD-20240131-8838', customer: '锦绣文化传媒', amount: 15600, status: 'success', time: '2024-01-31 09:07' }
+          ]
+        : [
+            { id: 'ORD-20240131-8842', customer: 'Stellar Tech Co.', amount: 28500, status: 'success', time: '2024-01-31 14:32' },
+            { id: 'ORD-20240131-8841', customer: 'CloudWave Media', amount: 12800, status: 'pending', time: '2024-01-31 13:18' },
+            { id: 'ORD-20240131-8840', customer: 'Insight Consulting', amount: 45200, status: 'success', time: '2024-01-31 11:45' },
+            { id: 'ORD-20240131-8839', customer: 'Revive MedTech', amount: 8900, status: 'refund', time: '2024-01-31 10:22' },
+            { id: 'ORD-20240131-8838', customer: 'Brocade Culture', amount: 15600, status: 'success', time: '2024-01-31 09:07' }
+          ];
+
+      var statusMap = {
+        success: { label: t.statusSuccess, cls: 'badge-success' },
+        pending: { label: t.statusPending, cls: 'badge-warning' },
+        failed: { label: t.statusFailed, cls: 'badge-danger' },
+        refund: { label: t.statusRefund, cls: 'badge-default' }
+      };
+
+      var html = '<table class="data-table">';
+      html += '<thead><tr>';
+      html += '<th>' + t.orderId + '</th>';
+      html += '<th>' + t.customer + '</th>';
+      html += '<th class="text-right">' + t.amount + '</th>';
+      html += '<th>' + t.status + '</th>';
+      html += '<th>' + t.time + '</th>';
+      html += '</tr></thead><tbody>';
+
+      orders.forEach(function (o) {
+        var s = statusMap[o.status] || statusMap.pending;
+        html += '<tr>';
+        html += '<td class="mono" style="color:#3B82F6;">' + o.id + '</td>';
+        html += '<td>' + o.customer + '</td>';
+        html += '<td class="text-right mono">¥' + o.amount.toLocaleString() + '</td>';
+        html += '<td><span class="badge ' + s.cls + '">' + s.label + '</span></td>';
+        html += '<td class="mono" style="color:#64748B;">' + o.time + '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      return html;
+    }
+  </script>
+</body>
+</html>

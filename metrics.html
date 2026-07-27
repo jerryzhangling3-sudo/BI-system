@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BI System - Metrics Management</title>
+  <meta name="description" content="BI System Business Intelligence - Metrics Management" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="margin:0;padding:0;">
+  <div id="sidebar-root"></div>
+
+  <script src="sidebar.js"></script>
+  <script src="lang-switch.js"></script>
+  <script>
+    var lang = 'en';
+    var activePath = 'metrics';
+    injectSidebar({ activePath: activePath, lang: lang });
+
+    (function () {
+      var t = {
+        pageTitle: 'Metrics Management',
+        pageSubtitle: 'Define and manage business metrics with consistent definitions',
+        addMetric: 'New Metric',
+        search: 'Search metrics...',
+        name: 'Metric Name',
+        code: 'Code',
+        category: 'Category',
+        owner: 'Owner',
+        definition: 'Definition',
+        formula: 'Formula',
+        status: 'Status',
+        updated: 'Updated',
+        actions: 'Actions',
+        active: 'Published',
+        draft: 'Draft',
+        deprecated: 'Deprecated',
+        view: 'View',
+        edit: 'Edit',
+        clone: 'Clone',
+        totalMetrics: 'Total Metrics',
+        activeMetrics: 'Published',
+        categories: 'Categories',
+        todayQuery: 'Queries Today'
+      };
+
+      document.title = 'BI System - Metrics Management';
+
+      var metrics = [
+        { code: 'MET-0001', name: 'Total Revenue', category: 'Revenue', owner: 'Finance', definition: 'Sum of all paid order amounts in the period', formula: 'SUM(order.amount WHERE status = paid)', status: 'active', updated: '2024-01-28', trend: '+12.5%' },
+        { code: 'MET-0002', name: 'Daily Active Users', category: 'Users', owner: 'Product', definition: 'Unique users with at least one valid visit per day', formula: 'COUNT(DISTINCT user_id WHERE date = today)', status: 'active', updated: '2024-01-30', trend: '+8.3%' },
+        { code: 'MET-0003', name: 'Conversion Rate', category: 'Conversion', owner: 'Operations', definition: 'Percentage of visitors who complete an order', formula: 'order_users / visit_users * 100%', status: 'active', updated: '2024-01-25', trend: '-0.8%' },
+        { code: 'MET-0004', name: 'Average Order Value', category: 'Revenue', owner: 'Operations', definition: 'Average payment amount per order', formula: 'total_revenue / total_orders', status: 'active', updated: '2024-01-29', trend: '+5.2%' },
+        { code: 'MET-0005', name: 'User Retention Rate', category: 'Users', owner: 'Product', definition: 'Percentage of new users who return on D1/D7/D30', formula: 'return_users / new_users * 100%', status: 'active', updated: '2024-01-27', trend: '+2.1%' },
+        { code: 'MET-0006', name: 'Customer Acquisition Cost', category: 'Marketing', owner: 'Marketing', definition: 'Average marketing cost to acquire one new user', formula: 'marketing_cost / new_users', status: 'active', updated: '2024-01-26', trend: '-3.5%' },
+        { code: 'MET-0007', name: 'Inventory Turnover', category: 'Operations', owner: 'Supply Chain', definition: 'Number of times inventory is sold in a period', formula: 'sales_cost / average_inventory', status: 'draft', updated: '2024-01-31', trend: 'N/A' },
+        { code: 'MET-0008', name: 'Customer Satisfaction', category: 'Service', owner: 'Support', definition: 'Percentage of satisfied customers in surveys', formula: 'satisfied_customers / survey_total * 100%', status: 'active', updated: '2024-01-24', trend: '+1.8%' },
+        { code: 'MET-0009', name: 'Repeat Purchase Rate', category: 'Users', owner: 'Operations', definition: 'Users who purchase 2+ times / total buyers', formula: 'repeat_buyers / total_buyers * 100%', status: 'deprecated', updated: '2024-01-15', trend: 'N/A' },
+        { code: 'MET-0010', name: 'Gross Margin', category: 'Finance', owner: 'Finance', definition: 'Gross profit as percentage of revenue', formula: '(revenue - cogs) / revenue * 100%', status: 'active', updated: '2024-01-28', trend: '+0.6%' }
+      ];
+
+      var statusMap = {
+        active: { label: 'Published', cls: 'badge-success' },
+        draft: { label: 'Draft', cls: 'badge-warning' },
+        deprecated: { label: 'Deprecated', cls: 'badge-default' }
+      };
+
+      var categoryColors = {
+        'Revenue': '#3B82F6',
+        'Users': '#10B981',
+        'Conversion': '#8B5CF6',
+        'Marketing': '#F59E0B',
+        'Operations': '#EC4899',
+        'Finance': '#6366F1',
+        'Service': '#14B8A6',
+        'Supply Chain': '#84CC16'
+      };
+
+      var contentEl = document.getElementById('page-content');
+      var html = '';
+
+      html += '<div class="page-header">';
+      html += '  <div>';
+      html += '    <h1>' + t.pageTitle + '</h1>';
+      html += '    <p>' + t.pageSubtitle + '</p>';
+      html += '  </div>';
+      html += '  <div class="flex gap-3">';
+      html += '    <div class="search-box">';
+      html += '      <i class="fas fa-search"></i>';
+      html += '      <input type="text" placeholder="' + t.search + '" />';
+      html += '    </div>';
+      html += '    <button class="btn btn-primary"><i class="fas fa-plus"></i> ' + t.addMetric + '</button>';
+      html += '  </div>';
+      html += '</div>';
+
+      html += '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">';
+      html += buildSmallKpi('fa-ruler-combined', t.totalMetrics, '128', 'blue');
+      html += buildSmallKpi('fa-check-circle', t.activeMetrics, '96', 'green');
+      html += buildSmallKpi('fa-tags', t.categories, '12', 'purple');
+      html += buildSmallKpi('fa-search', t.todayQuery, '12,847', 'orange');
+      html += '</div>';
+
+      html += '<div class="card" style="margin-bottom:20px;">';
+      html += '  <div style="padding:16px 24px;display:flex;gap:8px;flex-wrap:wrap;">';
+      var categories = ['All', 'Revenue', 'Users', 'Conversion', 'Marketing', 'Operations', 'Finance', 'Service'];
+      categories.forEach(function (c, i) {
+        var active = i === 0 ? 'background:#3B82F6;color:#fff;' : 'background:#F1F5F9;color:#475569;';
+        html += '    <span style="padding:6px 14px;border-radius:9999px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s ease;' + active + '">' + c + '</span>';
+      });
+      html += '  </div>';
+      html += '</div>';
+
+      html += '<div class="card">';
+      html += '  <div style="overflow-x:auto;">';
+      html += '    <table class="data-table">';
+      html += '      <thead>';
+      html += '        <tr>';
+      html += '          <th>' + t.name + '</th>';
+      html += '          <th>' + t.code + '</th>';
+      html += '          <th>' + t.category + '</th>';
+      html += '          <th>' + t.definition + '</th>';
+      html += '          <th>' + t.owner + '</th>';
+      html += '          <th>' + t.status + '</th>';
+      html += '          <th>Trend</th>';
+      html += '          <th>' + t.updated + '</th>';
+      html += '          <th class="text-right">' + t.actions + '</th>';
+      html += '        </tr>';
+      html += '      </thead>';
+      html += '      <tbody>';
+
+      metrics.forEach(function (m) {
+        var st = statusMap[m.status];
+        var catColor = categoryColors[m.category] || '#64748B';
+        var trendUp = m.trend.startsWith('+');
+        var trendCls = trendUp ? 'color:#10B981;' : m.trend.startsWith('-') ? 'color:#EF4444;' : 'color:#94A3B8;';
+        html += '<tr>';
+        html += '  <td>';
+        html += '    <div style="display:flex;align-items:center;gap:10px;">';
+        html += '      <div style="width:32px;height:32px;border-radius:8px;background:' + catColor + '15;color:' + catColor + ';display:flex;align-items:center;justify-content:center;font-size:12px;">';
+        html += '        <i class="fas fa-chart-line"></i>';
+        html += '      </div>';
+        html += '      <span style="font-weight:600;color:#0F172A;">' + m.name + '</span>';
+        html += '    </div>';
+        html += '  </td>';
+        html += '  <td class="mono" style="color:#64748B;font-size:12px;">' + m.code + '</td>';
+        html += '  <td><span class="badge" style="background:' + catColor + '15;color:' + catColor + ';">' + m.category + '</span></td>';
+        html += '  <td style="color:#64748B;font-size:12px;max-width:240px;">' + m.definition + '</td>';
+        html += '  <td>';
+        html += '    <div style="display:flex;align-items:center;gap:6px;">';
+        html += '      <div class="avatar" style="width:22px;height:22px;font-size:10px;">' + m.owner.charAt(0) + '</div>';
+        html += '      <span style="font-size:13px;">' + m.owner + '</span>';
+        html += '    </div>';
+        html += '  </td>';
+        html += '  <td><span class="badge ' + st.cls + '">' + st.label + '</span></td>';
+        html += '  <td class="mono" style="' + trendCls + 'font-weight:600;">' + m.trend + '</td>';
+        html += '  <td class="mono" style="color:#64748B;font-size:12px;">' + m.updated + '</td>';
+        html += '  <td class="text-right">';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;" title="' + t.view + '"><i class="far fa-eye" style="font-size:12px;"></i></button>';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;margin-left:4px;" title="' + t.edit + '"><i class="fas fa-edit" style="font-size:12px;"></i></button>';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;margin-left:4px;" title="' + t.clone + '"><i class="far fa-copy" style="font-size:12px;"></i></button>';
+        html += '  </td>';
+        html += '</tr>';
+      });
+
+      html += '      </tbody>';
+      html += '    </table>';
+      html += '  </div>';
+      html += '  <div style="padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #F1F5F9;">';
+      html += '    <span style="font-size:13px;color:#64748B;">Showing 1-10 of 128</span>';
+      html += '    <div style="display:flex;gap:4px;">';
+      html += '      <button class="btn btn-secondary btn-sm"><i class="fas fa-chevron-left" style="font-size:10px;"></i></button>';
+      html += '      <button class="btn btn-primary btn-sm">1</button>';
+      html += '      <button class="btn btn-secondary btn-sm">2</button>';
+      html += '      <button class="btn btn-secondary btn-sm">3</button>';
+      html += '      <button class="btn btn-secondary btn-sm">...</button>';
+      html += '      <button class="btn btn-secondary btn-sm">13</button>';
+      html += '      <button class="btn btn-secondary btn-sm"><i class="fas fa-chevron-right" style="font-size:10px;"></i></button>';
+      html += '    </div>';
+      html += '  </div>';
+      html += '</div>';
+
+      contentEl.innerHTML = html;
+
+      function buildSmallKpi(icon, label, value, color) {
+        var colorMap = {
+          blue: { bg: '#EFF6FF', text: '#3B82F6' },
+          green: { bg: '#ECFDF5', text: '#10B981' },
+          purple: { bg: '#F5F3FF', text: '#8B5CF6' },
+          orange: { bg: '#FFF7ED', text: '#F59E0B' }
+        };
+        var c = colorMap[color];
+        return '<div class="kpi-card">' +
+          '<div class="kpi-top">' +
+          '  <div style="width:40px;height:40px;border-radius:10px;background:' + c.bg + ';color:' + c.text + ';display:flex;align-items:center;justify-content:center;">' +
+          '    <i class="fas ' + icon + '"></i>' +
+          '  </div>' +
+          '</div>' +
+          '<div class="kpi-label">' + label + '</div>' +
+          '<div class="kpi-value mono" style="font-size:22px;">' + value + '</div>' +
+          '</div>';
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BI System - 指标管理</title>
+  <meta name="description" content="BI System 商业智能平台 - 指标管理" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="margin:0;padding:0;">
+  <div id="sidebar-root"></div>
+
+  <script src="sidebar.js"></script>
+  <script src="lang-switch.js"></script>
+  <script>
+    var lang = 'zh';
+    var activePath = 'metrics';
+    injectSidebar({ activePath: activePath, lang: lang });
+
+    (function () {
+      var t = {
+        pageTitle: '指标管理',
+        pageSubtitle: '统一定义和管理业务指标，确保口径一致',
+        addMetric: '新建指标',
+        search: '搜索指标...',
+        name: '指标名称',
+        code: '指标编码',
+        category: '分类',
+        owner: '负责人',
+        definition: '业务定义',
+        formula: '计算公式',
+        status: '状态',
+        updated: '更新时间',
+        actions: '操作',
+        active: '已发布',
+        draft: '草稿',
+        deprecated: '已废弃',
+        view: '查看',
+        edit: '编辑',
+        clone: '复制',
+        totalMetrics: '指标总数',
+        activeMetrics: '已发布',
+        categories: '分类数',
+        todayQuery: '今日查询次数'
+      };
+
+      document.title = 'BI System - 指标管理';
+
+      var metrics = [
+        { code: 'MET-0001', name: '总收入', category: '收入指标', owner: '财务组', definition: '统计周期内所有订单的实收金额总和', formula: 'SUM(order.amount WHERE status = paid)', status: 'active', updated: '2024-01-28', trend: '+12.5%' },
+        { code: 'MET-0002', name: '日活跃用户数', category: '用户指标', owner: '产品组', definition: '当日有至少一次有效访问的去重用户数', formula: 'COUNT(DISTINCT user_id WHERE date = today)', status: 'active', updated: '2024-01-30', trend: '+8.3%' },
+        { code: 'MET-0003', name: '转化率', category: '转化指标', owner: '运营组', definition: '访问用户中完成下单的用户占比', formula: 'order_users / visit_users * 100%', status: 'active', updated: '2024-01-25', trend: '-0.8%' },
+        { code: 'MET-0004', name: '客单价', category: '收入指标', owner: '运营组', definition: '平均每个订单的支付金额', formula: 'total_revenue / total_orders', status: 'active', updated: '2024-01-29', trend: '+5.2%' },
+        { code: 'MET-0005', name: '用户留存率', category: '用户指标', owner: '产品组', definition: '次日/7日/30日回访用户占新增用户的比例', formula: 'return_users / new_users * 100%', status: 'active', updated: '2024-01-27', trend: '+2.1%' },
+        { code: 'MET-0006', name: '获客成本', category: '营销指标', owner: '营销组', definition: '获取一个新用户所需的平均营销费用', formula: 'marketing_cost / new_users', status: 'active', updated: '2024-01-26', trend: '-3.5%' },
+        { code: 'MET-0007', name: '库存周转率', category: '运营指标', owner: '供应链组', definition: '一定时期内库存货物周转的次数', formula: 'sales_cost / average_inventory', status: 'draft', updated: '2024-01-31', trend: 'N/A' },
+        { code: 'MET-0008', name: '客户满意度', category: '服务指标', owner: '客服组', definition: '满意客户数占参与调查客户总数的比例', formula: 'satisfied_customers / survey_total * 100%', status: 'active', updated: '2024-01-24', trend: '+1.8%' },
+        { code: 'MET-0009', name: '复购率', category: '用户指标', owner: '运营组', definition: '统计周期内购买两次及以上的用户占比', formula: 'repeat_buyers / total_buyers * 100%', status: 'deprecated', updated: '2024-01-15', trend: 'N/A' },
+        { code: 'MET-0010', name: '毛利率', category: '财务指标', owner: '财务组', definition: '销售收入减去直接成本后的毛利占收入比例', formula: '(revenue - cogs) / revenue * 100%', status: 'active', updated: '2024-01-28', trend: '+0.6%' }
+      ];
+
+      var statusMap = {
+        active: { label: '已发布', cls: 'badge-success' },
+        draft: { label: '草稿', cls: 'badge-warning' },
+        deprecated: { label: '已废弃', cls: 'badge-default' }
+      };
+
+      var categoryColors = {
+        '收入指标': '#3B82F6',
+        '用户指标': '#10B981',
+        '转化指标': '#8B5CF6',
+        '营销指标': '#F59E0B',
+        '运营指标': '#EC4899',
+        '财务指标': '#6366F1',
+        '服务指标': '#14B8A6',
+        '供应链指标': '#84CC16'
+      };
+
+      var contentEl = document.getElementById('page-content');
+      var html = '';
+
+      html += '<div class="page-header">';
+      html += '  <div>';
+      html += '    <h1>' + t.pageTitle + '</h1>';
+      html += '    <p>' + t.pageSubtitle + '</p>';
+      html += '  </div>';
+      html += '  <div class="flex gap-3">';
+      html += '    <div class="search-box">';
+      html += '      <i class="fas fa-search"></i>';
+      html += '      <input type="text" placeholder="' + t.search + '" />';
+      html += '    </div>';
+      html += '    <button class="btn btn-primary"><i class="fas fa-plus"></i> ' + t.addMetric + '</button>';
+      html += '  </div>';
+      html += '</div>';
+
+      // 概览卡片
+      html += '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">';
+      html += buildSmallKpi('fa-ruler-combined', t.totalMetrics, '128', 'blue');
+      html += buildSmallKpi('fa-check-circle', t.activeMetrics, '96', 'green');
+      html += buildSmallKpi('fa-tags', t.categories, '12', 'purple');
+      html += buildSmallKpi('fa-search', t.todayQuery, '12,847', 'orange');
+      html += '</div>';
+
+      // 分类筛选
+      html += '<div class="card" style="margin-bottom:20px;">';
+      html += '  <div class="card-body" style="padding:16px 24px;display:flex;gap:8px;flex-wrap:wrap;">';
+      var categories = ['全部', '收入指标', '用户指标', '转化指标', '营销指标', '运营指标', '财务指标', '服务指标'];
+      categories.forEach(function (c, i) {
+        var active = i === 0 ? 'background:#3B82F6;color:#fff;' : 'background:#F1F5F9;color:#475569;';
+        html += '    <span style="padding:6px 14px;border-radius:9999px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s ease;' + active + '">' + c + '</span>';
+      });
+      html += '  </div>';
+      html += '</div>';
+
+      // 指标列表
+      html += '<div class="card">';
+      html += '  <div style="overflow-x:auto;">';
+      html += '    <table class="data-table">';
+      html += '      <thead>';
+      html += '        <tr>';
+      html += '          <th>' + t.name + '</th>';
+      html += '          <th>' + t.code + '</th>';
+      html += '          <th>' + t.category + '</th>';
+      html += '          <th>' + t.definition + '</th>';
+      html += '          <th>' + t.owner + '</th>';
+      html += '          <th>' + t.status + '</th>';
+      html += '          <th>趋势</th>';
+      html += '          <th>' + t.updated + '</th>';
+      html += '          <th class="text-right">' + t.actions + '</th>';
+      html += '        </tr>';
+      html += '      </thead>';
+      html += '      <tbody>';
+
+      metrics.forEach(function (m) {
+        var st = statusMap[m.status];
+        var catColor = categoryColors[m.category] || '#64748B';
+        var trendUp = m.trend.startsWith('+');
+        var trendCls = trendUp ? 'color:#10B981;' : m.trend.startsWith('-') ? 'color:#EF4444;' : 'color:#94A3B8;';
+        html += '<tr>';
+        html += '  <td>';
+        html += '    <div style="display:flex;align-items:center;gap:10px;">';
+        html += '      <div style="width:32px;height:32px;border-radius:8px;background:' + catColor + '15;color:' + catColor + ';display:flex;align-items:center;justify-content:center;font-size:12px;">';
+        html += '        <i class="fas fa-chart-line"></i>';
+        html += '      </div>';
+        html += '      <span style="font-weight:600;color:#0F172A;">' + m.name + '</span>';
+        html += '    </div>';
+        html += '  </td>';
+        html += '  <td class="mono" style="color:#64748B;font-size:12px;">' + m.code + '</td>';
+        html += '  <td><span class="badge" style="background:' + catColor + '15;color:' + catColor + ';">' + m.category + '</span></td>';
+        html += '  <td style="color:#64748B;font-size:12px;max-width:240px;">' + m.definition + '</td>';
+        html += '  <td>';
+        html += '    <div style="display:flex;align-items:center;gap:6px;">';
+        html += '      <div class="avatar" style="width:22px;height:22px;font-size:10px;">' + m.owner.charAt(0) + '</div>';
+        html += '      <span style="font-size:13px;">' + m.owner + '</span>';
+        html += '    </div>';
+        html += '  </td>';
+        html += '  <td><span class="badge ' + st.cls + '">' + st.label + '</span></td>';
+        html += '  <td class="mono" style="' + trendCls + 'font-weight:600;">' + m.trend + '</td>';
+        html += '  <td class="mono" style="color:#64748B;font-size:12px;">' + m.updated + '</td>';
+        html += '  <td class="text-right">';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;" title="' + t.view + '"><i class="far fa-eye" style="font-size:12px;"></i></button>';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;margin-left:4px;" title="' + t.edit + '"><i class="fas fa-edit" style="font-size:12px;"></i></button>';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;margin-left:4px;" title="' + t.clone + '"><i class="far fa-copy" style="font-size:12px;"></i></button>';
+        html += '  </td>';
+        html += '</tr>';
+      });
+
+      html += '      </tbody>';
+      html += '    </table>';
+      html += '  </div>';
+      html += '  <div style="padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #F1F5F9;">';
+      html += '    <span style="font-size:13px;color:#64748B;">显示 1-10 / 共 128 条</span>';
+      html += '    <div style="display:flex;gap:4px;">';
+      html += '      <button class="btn btn-secondary btn-sm"><i class="fas fa-chevron-left" style="font-size:10px;"></i></button>';
+      html += '      <button class="btn btn-primary btn-sm">1</button>';
+      html += '      <button class="btn btn-secondary btn-sm">2</button>';
+      html += '      <button class="btn btn-secondary btn-sm">3</button>';
+      html += '      <button class="btn btn-secondary btn-sm">...</button>';
+      html += '      <button class="btn btn-secondary btn-sm">13</button>';
+      html += '      <button class="btn btn-secondary btn-sm"><i class="fas fa-chevron-right" style="font-size:10px;"></i></button>';
+      html += '    </div>';
+      html += '  </div>';
+      html += '</div>';
+
+      contentEl.innerHTML = html;
+
+      function buildSmallKpi(icon, label, value, color) {
+        var colorMap = {
+          blue: { bg: '#EFF6FF', text: '#3B82F6' },
+          green: { bg: '#ECFDF5', text: '#10B981' },
+          purple: { bg: '#F5F3FF', text: '#8B5CF6' },
+          orange: { bg: '#FFF7ED', text: '#F59E0B' }
+        };
+        var c = colorMap[color];
+        return '<div class="kpi-card">' +
+          '<div class="kpi-top">' +
+          '  <div style="width:40px;height:40px;border-radius:10px;background:' + c.bg + ';color:' + c.text + ';display:flex;align-items:center;justify-content:center;">' +
+          '    <i class="fas ' + icon + '"></i>' +
+          '  </div>' +
+          '</div>' +
+          '<div class="kpi-label">' + label + '</div>' +
+          '<div class="kpi-value mono" style="font-size:22px;">' + value + '</div>' +
+          '</div>';
+      }
+    })();
+  </script>
+</body>
+</html>

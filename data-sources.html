@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BI System - Data Sources</title>
+  <meta name="description" content="BI System Business Intelligence - Data Sources Management" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="margin:0;padding:0;">
+  <div id="sidebar-root"></div>
+
+  <script src="sidebar.js"></script>
+  <script src="lang-switch.js"></script>
+  <script>
+    var lang = 'en';
+    var activePath = 'data-sources';
+    injectSidebar({ activePath: activePath, lang: lang });
+
+    (function () {
+      var t = {
+        pageTitle: 'Data Sources',
+        pageSubtitle: 'Manage all connected data sources and configurations',
+        addSource: 'Add Source',
+        search: 'Search data sources...',
+        name: 'Source Name',
+        type: 'Type',
+        host: 'Host',
+        status: 'Status',
+        lastSync: 'Last Sync',
+        owner: 'Owner',
+        actions: 'Actions',
+        online: 'Connected',
+        offline: 'Disconnected',
+        syncing: 'Syncing',
+        error: 'Error',
+        test: 'Test Connection',
+        edit: 'Edit',
+        delete: 'Delete',
+        totalSources: 'Total Sources',
+        onlineCount: 'Connected',
+        syncCount: 'Syncs Today',
+        dataVolume: 'Data Volume'
+      };
+
+      document.title = 'BI System - Data Sources';
+
+      var sources = [
+        { id: 'DS-001', name: 'Core Business DB', type: 'MySQL', host: 'db-prod-01.internal:3306', status: 'online', lastSync: '2024-01-31 14:30:00', owner: 'Ops Team', size: '128.5 GB', tables: 86 },
+        { id: 'DS-002', name: 'User Behavior Logs', type: 'ClickHouse', host: 'clickhouse-analytics:9000', status: 'online', lastSync: '2024-01-31 14:25:00', owner: 'Data Team', size: '2.4 TB', tables: 32 },
+        { id: 'DS-003', name: 'Order Data Warehouse', type: 'PostgreSQL', host: 'dw-order.internal:5432', status: 'syncing', lastSync: '2024-01-31 14:20:00', owner: 'Data Team', size: '512 GB', tables: 64 },
+        { id: 'DS-004', name: 'CRM System', type: 'API', host: 'api.crm.example.com', status: 'online', lastSync: '2024-01-31 13:00:00', owner: 'Product Team', size: 'N/A', tables: 12 },
+        { id: 'DS-005', name: 'Marketing Platform', type: 'MongoDB', host: 'mongo-marketing:27017', status: 'error', lastSync: '2024-01-30 22:15:00', owner: 'Marketing', size: '86 GB', tables: 24 },
+        { id: 'DS-006', name: 'Finance System', type: 'Oracle', host: 'oracle-finance:1521', status: 'online', lastSync: '2024-01-31 08:00:00', owner: 'Finance', size: '320 GB', tables: 156 },
+        { id: 'DS-007', name: 'Real-time Stream', type: 'Kafka', host: 'kafka-stream:9092', status: 'online', lastSync: '2024-01-31 14:32:00', owner: 'Platform', size: 'Realtime', tables: 18 },
+        { id: 'DS-008', name: 'Data Lake Storage', type: 'S3', host: 's3://data-lake-prod', status: 'offline', lastSync: '2024-01-28 16:00:00', owner: 'Ops Team', size: '15.6 TB', tables: 200 }
+      ];
+
+      var statusMap = {
+        online: { label: 'Connected', cls: 'badge-success', dot: 'green' },
+        offline: { label: 'Disconnected', cls: 'badge-default', dot: 'gray' },
+        syncing: { label: 'Syncing', cls: 'badge-info', dot: 'gray' },
+        error: { label: 'Error', cls: 'badge-danger', dot: 'red' }
+      };
+
+      var typeIcons = {
+        'MySQL': { icon: 'fa-database', color: '#3B82F6' },
+        'PostgreSQL': { icon: 'fa-database', color: '#336791' },
+        'ClickHouse': { icon: 'fa-chart-column', color: '#FFCC01' },
+        'MongoDB': { icon: 'fa-leaf', color: '#13AA52' },
+        'Oracle': { icon: 'fa-database', color: '#F80000' },
+        'Kafka': { icon: 'fa-stream', color: '#231F20' },
+        'S3': { icon: 'fa-bucket', color: '#FF9900' },
+        'API': { icon: 'fa-plug', color: '#8B5CF6' }
+      };
+
+      var contentEl = document.getElementById('page-content');
+      var html = '';
+
+      html += '<div class="page-header">';
+      html += '  <div>';
+      html += '    <h1>' + t.pageTitle + '</h1>';
+      html += '    <p>' + t.pageSubtitle + '</p>';
+      html += '  </div>';
+      html += '  <div class="flex gap-3">';
+      html += '    <div class="search-box">';
+      html += '      <i class="fas fa-search"></i>';
+      html += '      <input type="text" placeholder="' + t.search + '" />';
+      html += '    </div>';
+      html += '    <button class="btn btn-primary"><i class="fas fa-plus"></i> ' + t.addSource + '</button>';
+      html += '  </div>';
+      html += '</div>';
+
+      html += '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">';
+      html += buildSmallKpi('fa-database', t.totalSources, '8', 'blue');
+      html += buildSmallKpi('fa-check-circle', t.onlineCount, '6 / 8', 'green');
+      html += buildSmallKpi('fa-sync', t.syncCount, '248 times', 'purple');
+      html += buildSmallKpi('fa-hard-drive', t.dataVolume, '19.2 TB', 'orange');
+      html += '</div>';
+
+      html += '<div class="card">';
+      html += '  <div class="card-header">';
+      html += '    <h3 class="card-title">Source List</h3>';
+      html += '    <div class="flex gap-2">';
+      html += '      <button class="btn btn-secondary btn-sm">All Types</button>';
+      html += '      <button class="btn btn-secondary btn-sm">All Status</button>';
+      html += '    </div>';
+      html += '  </div>';
+      html += '  <div style="overflow-x:auto;">';
+      html += '    <table class="data-table">';
+      html += '      <thead>';
+      html += '        <tr>';
+      html += '          <th style="width:40px;"></th>';
+      html += '          <th>' + t.name + '</th>';
+      html += '          <th>' + t.type + '</th>';
+      html += '          <th>' + t.host + '</th>';
+      html += '          <th>' + t.status + '</th>';
+      html += '          <th>' + t.lastSync + '</th>';
+      html += '          <th>' + t.owner + '</th>';
+      html += '          <th>Volume</th>';
+      html += '          <th class="text-right">' + t.actions + '</th>';
+      html += '        </tr>';
+      html += '      </thead>';
+      html += '      <tbody>';
+
+      sources.forEach(function (s) {
+        var st = statusMap[s.status];
+        var ti = typeIcons[s.type] || { icon: 'fa-database', color: '#64748B' };
+        html += '<tr>';
+        html += '  <td><div style="width:36px;height:36px;border-radius:8px;background:' + ti.color + '15;display:flex;align-items:center;justify-content:center;color:' + ti.color + ';"><i class="fas ' + ti.icon + '"></i></div></td>';
+        html += '  <td>';
+        html += '    <div style="font-weight:600;color:#0F172A;">' + s.name + '</div>';
+        html += '    <div style="font-size:12px;color:#94A3B8;" class="mono">' + s.id + '</div>';
+        html += '  </td>';
+        html += '  <td><span class="badge badge-default">' + s.type + '</span></td>';
+        html += '  <td class="mono" style="color:#64748B;font-size:12px;">' + s.host + '</td>';
+        html += '  <td><span class="badge ' + st.cls + '"><span class="status-dot ' + st.dot + '"></span>' + st.label + '</span></td>';
+        html += '  <td class="mono" style="color:#64748B;font-size:12px;">' + s.lastSync + '</td>';
+        html += '  <td>' + s.owner + '</td>';
+        html += '  <td class="mono" style="font-size:12px;">' + s.size + ' / ' + s.tables + ' tbls</td>';
+        html += '  <td class="text-right">';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;" title="' + t.test + '"><i class="fas fa-plug" style="font-size:12px;"></i></button>';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;margin-left:4px;" title="' + t.edit + '"><i class="fas fa-edit" style="font-size:12px;"></i></button>';
+        html += '    <button class="icon-btn" style="width:28px;height:28px;margin-left:4px;" title="' + t.delete + '"><i class="fas fa-trash-alt" style="font-size:12px;color:#EF4444;"></i></button>';
+        html += '  </td>';
+        html += '</tr>';
+      });
+
+      html += '      </tbody>';
+      html += '    </table>';
+      html += '  </div>';
+      html += '</div>';
+
+      contentEl.innerHTML = html;
+
+      function buildSmallKpi(icon, label, value, color) {
+        var colorMap = {
+          blue: { bg: '#EFF6FF', text: '#3B82F6' },
+          green: { bg: '#ECFDF5', text: '#10B981' },
+          purple: { bg: '#F5F3FF', text: '#8B5CF6' },
+          orange: { bg: '#FFF7ED', text: '#F59E0B' }
+        };
+        var c = colorMap[color];
+        return '<div class="kpi-card">' +
+          '<div class="kpi-top">' +
+          '  <div style="width:40px;height:40px;border-radius:10px;background:' + c.bg + ';color:' + c.text + ';display:flex;align-items:center;justify-content:center;">' +
+          '    <i class="fas ' + icon + '"></i>' +
+          '  </div>' +
+          '</div>' +
+          '<div class="kpi-label">' + label + '</div>' +
+          '<div class="kpi-value mono" style="font-size:22px;">' + value + '</div>' +
+          '</div>';
+      }
+    })();
+  </script>
+</body>
+</html>
