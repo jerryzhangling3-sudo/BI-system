@@ -1,4 +1,4 @@
-# AGENTS.md — BI System
+# AGENTS.md — BI System v2
 
 > 项目规范与开发指引，供 AI Agent 快速理解项目结构和编码约定。
 
@@ -10,12 +10,16 @@
 - **无框架**：不使用 React/Vue/Vite/任何构建工具
 - **无后端**：纯静态页面，数据为静态演示数据
 - **双语架构**：中英文双语，中文文件名 / 英文 kebab-case 文件名成对
+- **v2 版本**：经营数据中心，含实时经营概览与财务数据(EOD)两大模块
 
 ## 2. 目录结构
 
 ```
 BI-system/
-├── index.html              # 首页 / 总览仪表盘（单文件双语，?lang=zh/en）
+├── index.html              # 中文：实时经营概览（客户/出入金/交易 三大板块）
+├── dashboard.html          # 英文：Real-time Overview
+├── 财务数据.html           # 中文：财务数据（EOD日终快照）
+├── financial-data.html     # 英文：Financial Data
 ├── 报表中心.html           # 中文：报表中心
 ├── reports.html            # 英文：Reports Center
 ├── 数据源管理.html         # 中文：数据源管理
@@ -24,6 +28,8 @@ BI-system/
 ├── metrics.html            # 英文：Metrics Management
 ├── sidebar.js              # 侧边栏菜单与路由 —— 唯一真相源 (SSOT)
 ├── lang-switch.js          # 中英文页面切换管理
+├── bi-data.js              # 模拟数据生成器（带种子，会话内一致）
+├── bi-charts.js            # 纯 SVG 图表库（折线/条形/环形/漏斗/双轴）
 ├── styles/
 │   └── main.css            # 全局样式（扩展 Tailwind CDN）
 ├── serve.sh                # 本地静态服务器启动脚本
@@ -42,11 +48,11 @@ BI-system/
 - 所有页面通过 `injectSidebar({activePath, lang})` 注入侧边栏和顶栏
 - 菜单配置在 `MENU_CONFIG` 对象中，每项包含：`path`、`zhLabel`、`enLabel`、`icon`、`zhFile`、`enFile`
 - **新增页面必须在 `MENU_CONFIG` 注册**，同时创建中英两个 HTML 文件
-- `activePath` 是菜单项的唯一标识，对应英文文件名（不含 .html），如 `'reports'`、`'data-sources'`、`'metrics'`
+- `activePath` 是菜单项的唯一标识，对应英文文件名（不含 .html），如 `'index'`、`'financial-data'`、`'reports'`
 
 ```javascript
 // 每个页面必须包含以下代码（保证顺序正确）：
-// 1. 引入 sidebar.js 和 lang-switch.js
+// 1. 引入 sidebar.js、lang-switch.js
 // 2. 调用 injectSidebar({ activePath: 'xxx', lang: lang })
 // 3. 向 #page-content 注入本页内容
 ```
@@ -57,15 +63,16 @@ BI-system/
 
 | 中文页面 | 英文页面 | activePath |
 |---------|---------|------------|
-| index.html (zh mode) | index.html (en mode) | `index` |
+| index.html | dashboard.html | `index` |
+| 财务数据.html | financial-data.html | `financial-data` |
 | 报表中心.html | reports.html | `reports` |
 | 数据源管理.html | data-sources.html | `data-sources` |
 | 指标管理.html | metrics.html | `metrics` |
 
-**首页特殊规则**：`index.html` 是单文件双语，通过 URL 参数 `?lang=zh` 或 `?lang=en` 切换语言。
+**首页规则**：`index.html` 是中文版，`dashboard.html` 是英文版，成对存在，activePath 均为 `index`。
 
 **成对规则**：
-- 除首页外，每个功能页面必须有中文文件名和英文 kebab-case 文件名两个文件
+- 每个功能页面必须有中文文件名和英文 kebab-case 文件名两个文件
 - 两个文件内容结构一致，仅文案语言不同
 - 新增/删除/重命名页面时，必须同时操作两个文件，并更新 `sidebar.js` 的菜单配置和 `lang-switch.js` 的映射表
 
@@ -76,12 +83,31 @@ BI-system/
 
 ### 3.3 activePath 规范
 
-- `activePath` 始终使用英文 kebab-case，如 `reports`、`data-sources`
+- `activePath` 始终使用英文 kebab-case，如 `financial-data`、`data-sources`
 - 它是页面在菜单系统中的唯一标识符
 - 中文页面和英文页面的 `activePath` 相同（因为它们是同一个页面的双语版本）
 - `sidebar.js` 根据 `activePath + lang` 决定哪个菜单项高亮
 
-### 3.4 视觉规范
+### 3.4 数据生成规范 (bi-data.js)
+
+- **`BiData` 对象**是模拟数据的唯一真相源
+- 使用基于时间戳的种子随机数生成器，保证同一会话内数据一致
+- 页面刷新或点击"刷新快照"时重新生成数据
+- **业务恒等式**（必须始终成立）：
+  - 客户漏斗：`tradingUsers <= firstDepositUsers <= openAccounts <= kycUsers <= registeredUsers`
+  - 出入金：`netDeposit = depositAmount - withdrawAmount`
+  - Funding：`fundingTotal = fundingAvailable + fundingFrozen`
+  - Equity 与 Balance 接近：`equity ≈ balance ± (1~3%)`
+- 所有数据为完全虚构，禁止真实客户信息
+
+### 3.5 图表库规范 (bi-charts.js)
+
+- 纯 SVG 实现，不依赖第三方图表库
+- 支持图表类型：多折线图 (`renderMultiLineChart`)、横向条形图 (`renderHorizontalBars`)、环形图 (`renderDonutChart`)、漏斗图 (`renderFunnelChart`)、双轴图 (`renderDualAxisChart`)
+- 所有图表容器使用 `.chart-container` 类，响应式适应容器宽度
+- 图表尺寸在渲染时从容器 offsetWidth 计算
+
+### 3.6 视觉规范
 
 详见 `DESIGN.md`，核心要点：
 
@@ -90,12 +116,6 @@ BI-system/
 - **内容背景**：浅灰 `#F8FAFC`
 - **卡片**：`rounded-xl` / `shadow-sm` / `border-slate-200`
 - **等宽字体**：金额、时间、ID 编号一律使用等宽字体（`.mono` 类或 `.kpi-value` / `.amount` / `.timestamp` / `.id-text`）
-
-### 3.5 数据规范
-
-- **全部使用静态演示数据**，完全虚构，禁止真实客户信息
-- 数据应具有真实感（合理的数值范围、命名风格、业务逻辑）
-- 公司名、人名、订单号等均为虚构
 
 ## 4. 新增页面步骤
 
@@ -117,8 +137,26 @@ BI-system/
 # 2. JavaScript 语法检查（需要 node）
 node -c sidebar.js
 node -c lang-switch.js
+node -c bi-data.js
+node -c bi-charts.js
 
-# 3. 启动服务并访问验证
+# 3. 业务恒等式校验
+node -e "
+var BiData = require('./bi-data.js');
+var s = BiData.getSnapshot('30d', '', '', {});
+var c = s.customer;
+console.assert(c.tradingUsers <= c.firstDepositUsers, '漏斗约束失败: trading > firstDeposit');
+console.assert(c.firstDepositUsers <= c.openAccounts, '漏斗约束失败: firstDeposit > openAccounts');
+console.assert(c.openAccounts <= c.kycUsers, '漏斗约束失败: openAccounts > kyc');
+console.assert(c.kycUsers <= c.registeredUsers, '漏斗约束失败: kyc > registered');
+var f = s.funding;
+console.assert(Math.abs(f.netDeposit - (f.depositAmount - f.withdrawAmount)) < 1, '净入金恒等式失败');
+var fin = s.financial;
+console.assert(Math.abs(fin.latest.fundingTotal - (fin.latest.fundingAvailable + fin.latest.fundingFrozen)) < 1, 'Funding恒等式失败');
+console.log('所有业务恒等式校验通过');
+"
+
+# 4. 启动服务并访问验证
 ./serve.sh 5000
 ```
 
@@ -153,9 +191,12 @@ node -c lang-switch.js
 |-----|------|
 | 修改菜单 / 新增页面入口 | `sidebar.js` → `MENU_CONFIG` |
 | 修改双语切换逻辑 | `lang-switch.js` → `BILINGUAL_PAGES` |
+| 修改数据生成逻辑 / 业务约束 | `bi-data.js` → `BiData` 对象 |
+| 修改图表渲染 | `bi-charts.js` → `BiCharts` 对象 |
 | 修改全局样式 / 组件样式 | `styles/main.css` |
 | 修改设计规范 / 视觉风格 | `DESIGN.md` |
-| 首页仪表盘内容 | `index.html` 内的 IIFE 函数 |
+| 实时经营概览页面 | `index.html` / `dashboard.html` |
+| 财务数据页面 | `财务数据.html` / `financial-data.html` |
 | 报表中心页面 | `报表中心.html` / `reports.html` |
 | 数据源管理页面 | `数据源管理.html` / `data-sources.html` |
 | 指标管理页面 | `指标管理.html` / `metrics.html` |

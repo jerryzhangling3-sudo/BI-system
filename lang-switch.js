@@ -2,16 +2,14 @@
  * lang-switch.js — BI System 中英文双语页面切换管理
  *
  * 规则：
- * - 中文页面文件名：中文名.html（如 报表中心.html）
- * - 英文页面文件名：kebab-case.html（如 reports.html）
- * - 首页 index.html 为双语单页，通过 ?lang=zh/en 切换
+ * - 中文页面文件名：中文名.html（如 实时经营概览.html）
+ * - 英文页面文件名：kebab-case.html（如 dashboard.html）
  * - 每对页面必须同时存在，新增/删除时必须同步
  *
  * 用法：
  *   在页面中调用 initLangSwitch()，自动：
  *   1. 检测当前语言
  *   2. 绑定语言切换链接
- *   3. 为首页支持 query 参数切换内容语言
  */
 
 (function (global) {
@@ -20,11 +18,15 @@
   // 双语页面映射表（中文文件名 -> 英文文件名）
   // 新增双语页面时必须在此注册，并确保两个文件同时存在
   const BILINGUAL_PAGES = {
-    // 首页特殊处理（单文件双语）
-    'index.html': 'index.html',
-    // 功能页面（成对文件）
+    // 首页（实时经营概览）
+    'index.html': 'dashboard.html',
+    // 财务数据
+    '财务数据.html': 'financial-data.html',
+    // 报表中心
     '报表中心.html': 'reports.html',
+    // 数据源管理
     '数据源管理.html': 'data-sources.html',
+    // 指标管理
     '指标管理.html': 'metrics.html'
   };
 
@@ -37,7 +39,7 @@
     // 设置 HTML lang 属性
     document.documentElement.setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en');
 
-    // 绑定语言切换按钮事件（如果通过 sidebar 渲染，已是 <a href> 跳转）
+    // 绑定语言切换按钮事件
     bindLangEvents();
   }
 
@@ -48,10 +50,6 @@
     if (typeof detectLang === 'function') return detectLang();
 
     // fallback：从 URL 判断
-    var params = new URLSearchParams(window.location.search);
-    var langParam = params.get('lang');
-    if (langParam === 'zh' || langParam === 'en') return langParam;
-
     var filename = window.location.pathname.split('/').pop() || 'index.html';
     if (/[\u4e00-\u9fa5]/.test(filename)) return 'zh';
     if (filename !== 'index.html' && filename !== '') return 'en';
@@ -66,15 +64,8 @@
     var currentFile = window.location.pathname.split('/').pop() || 'index.html';
     var targetFile = getPairedFile(currentFile, lang);
 
-    if (currentFile === 'index.html' || currentFile === '') {
-      // 首页：通过 query 参数切换
-      var url = new URL(window.location.href);
-      url.searchParams.set('lang', lang);
-      window.location.href = url.toString();
-    } else {
-      // 其他页面：跳转到对应语言的文件
-      window.location.href = targetFile;
-    }
+    // 跳转到对应语言的文件
+    window.location.href = targetFile;
   }
 
   /**

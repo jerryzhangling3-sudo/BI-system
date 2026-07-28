@@ -1,137 +1,157 @@
-#!/usr/bin/env bash
-# check-bilingual.sh — 双语一致性检查脚本
-# 检查所有中文页面是否有对应的英文页面（kebab-case），反之亦然
-# 用法: ./check-bilingual.sh
-# 返回: 0 = 全部通过，1 = 有缺失
+#!/bin/bash
+# 双语一致性检查脚本
+# 检查所有双语页面是否成对存在、sidebar.js 配置是否完整、lang-switch.js 映射是否完整
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+ERRORS=0
+WARNINGS=0
+
+echo "=========================================="
+echo "  BI System 双语一致性检查 v2"
+echo "=========================================="
+echo ""
+
+# 获取脚本所在目录
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
-# 双语页面映射表（必须与 lang-switch.js 中的 BILINGUAL_PAGES 保持一致）
-# 格式: "中文名.html|英文名.html"
-declare -a PAGE_PAIRS=(
+# ===== 1. 检查成对页面 =====
+echo "[1/4] 检查双语页面成对存在..."
+echo "------------------------------------------"
+
+PAGE_PAIRS=(
+  "index.html|dashboard.html"
+  "财务数据.html|financial-data.html"
   "报表中心.html|reports.html"
   "数据源管理.html|data-sources.html"
   "指标管理.html|metrics.html"
 )
 
-# 首页特殊处理
-INDEX_FILE="index.html"
-
-ERRORS=0
-WARNINGS=0
-PASSED=0
-
-echo "========================================"
-echo "  BI System Bilingual Consistency Check"
-echo "========================================"
-echo ""
-
-# 1. 检查首页
-echo "[1/4] Checking index page..."
-if [ -f "$INDEX_FILE" ]; then
-  echo "  ✓ $INDEX_FILE exists (bilingual single page)"
-  PASSED=$((PASSED + 1))
-else
-  echo "  ✗ $INDEX_FILE NOT FOUND"
-  ERRORS=$((ERRORS + 1))
-fi
-echo ""
-
-# 2. 检查成对页面
-echo "[2/4] Checking bilingual page pairs..."
-for pair in "${PAGE_PAIRS[@]}"; do
-  zh_file="${pair%%|*}"
-  en_file="${pair##*|}"
+for page_pair in "${PAGE_PAIRS[@]}"; do
+  zh_file="${page_pair%%|*}"
+  en_file="${page_pair#*|}"
 
   zh_exists=0
   en_exists=0
 
-  if [ -f "$zh_file" ]; then
-    zh_exists=1
-  fi
-  if [ -f "$en_file" ]; then
-    en_exists=1
-  fi
+  [ -f "$zh_file" ] && zh_exists=1
+  [ -f "$en_file" ] && en_exists=1
 
   if [ $zh_exists -eq 1 ] && [ $en_exists -eq 1 ]; then
-    echo "  ✓ $zh_file ↔ $en_file"
-    PASSED=$((PASSED + 1))
-  elif [ $zh_exists -eq 1 ] && [ $en_exists -eq 0 ]; then
-    echo "  ✗ $zh_file exists but $en_file MISSING"
-    ERRORS=$((ERRORS + 1))
-  elif [ $zh_exists -eq 0 ] && [ $en_exists -eq 1 ]; then
-    echo "  ✗ $en_file exists but $zh_file MISSING"
-    ERRORS=$((ERRORS + 1))
+    zh_size=$(stat -c%s "$zh_file" 2>/dev/null || stat -f%z "$zh_file" 2>/dev/null)
+    en_size=$(stat -c%s "$en_file" 2>/dev/null || stat -f%z "$en_file" 2>/dev/null)
+
+    # 计算大小差异百分比
+    if [ $zh_size -gt 0 ]; then
+      diff_pct=$(echo "scale=1; ($zh_size - $en_size) * 100 / $zh_size" | bc 2>/dev/null || echo "0")
+      abs_diff=$(echo "$diff_pct" | tr -d '-')
+    else
+      abs_diff="0"
+    fi
+
+    echo -e "${GREEN}✓${NC} $zh_file ↔ $en_file (${zh_size}B / ${en_size}B, 差 ${abs_diff}%)"
   else
-    echo "  ! Both $zh_file and $en_file missing (skipped)"
-    WARNINGS=$((WARNINGS + 1))
+    echo -e "${RED}✗${NC} 缺失: "
+    [ $zh_exists -eq 0 ] && echo -e "    ${RED}  - $zh_file (中文)${NC}"
+    [ $en_exists -eq 0 ] && echo -e "    ${RED}  - $en_file (英文)${NC}"
+    ERRORS=$((ERRORS + 1))
   fi
 done
+
 echo ""
 
-# 3. 检查 sidebar.js 菜单配置中的文件引用
-echo "[3/4] Checking sidebar.js menu references..."
-if [ -f "sidebar.js" ]; then
-  MENU_ZH=$(grep -Eo "zhFile:[[:space:]]*['\"][^'\"]+['\"]" sidebar.js | sed -E 's/zhFile:[[:space:]]*//' | tr -d "'\"" | grep -v '^#$' | sort -u)
-  MENU_EN=$(grep -Eo "enFile:[[:space:]]*['\"][^'\"]+['\"]" sidebar.js | sed -E 's/enFile:[[:space:]]*//' | tr -d "'\"" | grep -v '^#$' | sort -u)
+# ===== 2. 检查 sidebar.js 菜单配置 =====
+echo "[2/4] 检查 sidebar.js 菜单配置..."
+echo "------------------------------------------"
 
-  for f in $MENU_ZH; do
-    if [ "$f" = "#" ]; then continue; fi
-    if [ -f "$f" ]; then
-      echo "  ✓ sidebar.js → $f"
-    else
-      echo "  ⚠ sidebar.js references $f but file not found"
-      WARNINGS=$((WARNINGS + 1))
-    fi
-  done
-
-  for f in $MENU_EN; do
-    if [ "$f" = "#" ]; then continue; fi
-    if [ -f "$f" ]; then
-      echo "  ✓ sidebar.js → $f"
-    else
-      echo "  ⚠ sidebar.js references $f but file not found"
-      WARNINGS=$((WARNINGS + 1))
-    fi
-  done
-  PASSED=$((PASSED + 1))
-else
-  echo "  ✗ sidebar.js NOT FOUND"
+if [ ! -f "sidebar.js" ]; then
+  echo -e "${RED}✗ sidebar.js 不存在${NC}"
   ERRORS=$((ERRORS + 1))
-fi
-echo ""
-
-# 4. 检查 lang-switch.js 映射表
-echo "[4/4] Checking lang-switch.js bilingual map..."
-if [ -f "lang-switch.js" ]; then
-  MAP_COUNT=$(grep -Ec "['\"][^'\"]+\.html['\"]" lang-switch.js || true)
-  echo "  ✓ lang-switch.js found with ~$MAP_COUNT page entries"
-  PASSED=$((PASSED + 1))
 else
-  echo "  ✗ lang-switch.js NOT FOUND"
-  ERRORS=$((ERRORS + 1))
-fi
-echo ""
+  # 统计菜单项数量
+  menu_count=$(grep -c "path:" sidebar.js || echo "0")
+  echo -e "${GREEN}✓${NC} sidebar.js 存在，含 $menu_count 个菜单项"
 
-# 总结
-echo "========================================"
-echo "  Summary"
-echo "========================================"
-echo "  Passed:   $PASSED"
-echo "  Warnings: $WARNINGS"
-echo "  Errors:   $ERRORS"
-echo ""
-
-if [ $ERRORS -gt 0 ]; then
-  echo "RESULT: FAILED — $ERRORS error(s) found"
-  exit 1
-else
-  echo "RESULT: PASSED — All bilingual checks passed"
-  if [ $WARNINGS -gt 0 ]; then
-    echo "        ($WARNINGS warning(s), please review)"
+  # 检查关键函数
+  if grep -q "injectSidebar" sidebar.js; then
+    echo -e "${GREEN}✓${NC} injectSidebar 函数存在"
+  else
+    echo -e "${RED}✗${NC} injectSidebar 函数缺失"
+    ERRORS=$((ERRORS + 1))
   fi
+
+  # 检查 MENU_CONFIG
+  if grep -q "MENU_CONFIG" sidebar.js; then
+    echo -e "${GREEN}✓${NC} MENU_CONFIG 存在"
+  else
+    echo -e "${RED}✗${NC} MENU_CONFIG 缺失"
+    ERRORS=$((ERRORS + 1))
+  fi
+fi
+
+echo ""
+
+# ===== 3. 检查 lang-switch.js 映射 =====
+echo "[3/4] 检查 lang-switch.js 双语映射..."
+echo "------------------------------------------"
+
+if [ ! -f "lang-switch.js" ]; then
+  echo -e "${RED}✗ lang-switch.js 不存在${NC}"
+  ERRORS=$((ERRORS + 1))
+else
+  if grep -q "BILINGUAL_PAGES" lang-switch.js; then
+    echo -e "${GREEN}✓${NC} BILINGUAL_PAGES 映射存在"
+    mapping_count=$(grep -c "\.html" lang-switch.js || echo "0")
+    echo -e "${GREEN}✓${NC} 映射条目数: $mapping_count"
+  else
+    echo -e "${RED}✗${NC} BILINGUAL_PAGES 缺失"
+    ERRORS=$((ERRORS + 1))
+  fi
+fi
+
+echo ""
+
+# ===== 4. 检查核心基础设施 =====
+echo "[4/4] 检查核心基础设施文件..."
+echo "------------------------------------------"
+
+CORE_FILES=(
+  "sidebar.js"
+  "lang-switch.js"
+  "bi-data.js"
+  "bi-charts.js"
+  "styles/main.css"
+)
+
+for file in "${CORE_FILES[@]}"; do
+  if [ -f "$file" ]; then
+    size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null)
+    echo -e "${GREEN}✓${NC} $file (${size}B)"
+  else
+    echo -e "${RED}✗${NC} $file 不存在"
+    ERRORS=$((ERRORS + 1))
+  fi
+done
+
+echo ""
+echo "=========================================="
+echo "  检查完成"
+echo "=========================================="
+
+if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
+  echo -e "${GREEN}全部通过！0 错误，0 警告${NC}"
   exit 0
+elif [ $ERRORS -eq 0 ]; then
+  echo -e "${YELLOW}有 $WARNINGS 个警告，0 个错误${NC}"
+  exit 0
+else
+  echo -e "${RED}发现 $ERRORS 个错误，$WARNINGS 个警告${NC}"
+  echo -e "${RED}请修复上述问题后再提交。${NC}"
+  exit 1
 fi

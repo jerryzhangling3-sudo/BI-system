@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BI System - Financial Data</title>
+  <meta name="description" content="BI System Financial Data - EOD Daily Snapshot" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body style="margin:0;padding:0;">
+  <div id="sidebar-root"></div>
+
+  <script src="sidebar.js"></script>
+  <script src="lang-switch.js"></script>
+  <script src="bi-data.js"></script>
+  <script src="bi-charts.js"></script>
+  <script>
+    var lang = 'en';
+    var activePath = 'financial-data';
+    injectSidebar({ activePath: activePath, lang: lang });
+
+    (function () {
+      'use strict';
+
+      var t = {
+        pageTitle: 'Financial Data',
+        eodLabel: 'EOD Snapshot',
+        eodDesc: 'End-of-day snapshot at server time 23:59:59',
+        refresh: 'Refresh',
+        reset: 'Reset',
+        period: 'Period',
+        last7d: 'Last 7 Days',
+        last30d: 'Last 30 Days',
+        last90d: 'Last 90 Days',
+
+        currency: 'Currency',
+        allCurrencies: 'All Currencies',
+        usd: 'USD',
+        aed: 'AED',
+        usdt: 'USDT',
+        amountType: 'Amount Type',
+        allAmountType: 'All Types',
+        available: 'Available',
+        frozen: 'Frozen',
+
+        balance: 'Trading Account Balance',
+        equity: 'Trading Account Equity',
+        fundingTotal: 'Funding Account Balance',
+        fundingAvailable: 'Funding Available',
+        fundingFrozen: 'Funding Frozen',
+        usdEquivalent: 'USD equivalent',
+
+        balanceEquity: 'Balance vs Equity Trend',
+        fundingBreakdown: 'Funding Balance Breakdown',
+        currencyBreakdown: 'Currency Breakdown',
+        eodTable: 'Recent EOD Snapshots',
+        date: 'Date',
+        totalLabel: 'Total',
+        availableLabel: 'Available',
+        frozenLabel: 'Frozen',
+
+        updatedAt: 'Updated at',
+        dataNote: 'Demo data for display purposes only'
+      };
+
+      var state = {
+        period: '30d',
+        customStart: '',
+        customEnd: '',
+        currency: 'all',
+        amountType: 'all',
+        collapsed: { eod: false }
+      };
+
+      function render() {
+        var contentEl = document.getElementById('page-content');
+        if (!contentEl) return;
+
+        var snapshot = getSnapshot();
+        var f = snapshot.financial;
+        var html = '';
+
+        html += '<div class="info-banner warning">';
+        html += '  <i class="fas fa-server"></i>';
+        html += '  <span>' + t.eodLabel + ' · ' + t.eodDesc + '</span>';
+        html += '  <span style="margin-left:auto;font-size:12px;color:#64748B;">';
+        html += t.updatedAt + ': ' + BiData.formatDateTime(snapshot.timestamp);
+        html += '  </span>';
+        html += '</div>';
+
+        html += renderFilterBar(snapshot);
+
+        html += '<div class="card section-card">';
+        html += '  <div class="section-header">';
+        html += '    <div class="section-header-left">';
+        html += '      <div class="section-icon green"><i class="fas fa-piggy-bank"></i></div>';
+        html += '      <div>';
+        html += '        <h2 class="section-title">' + t.pageTitle + '</h2>';
+        html += '        <div class="section-desc">EOD financial snapshots · ' + t.usdEquivalent + '</div>';
+        html += '      </div>';
+        html += '    </div>';
+        html += '    <div class="section-header-right">';
+        html += '      <select class="select-control" id="filter-currency">';
+        html += '        <option value="all"' + (state.currency === 'all' ? ' selected' : '') + '>' + t.allCurrencies + '</option>';
+        html += '        <option value="usd"' + (state.currency === 'usd' ? ' selected' : '') + '>' + t.usd + '</option>';
+        html += '        <option value="aed"' + (state.currency === 'aed' ? ' selected' : '') + '>' + t.aed + '</option>';
+        html += '        <option value="usdt"' + (state.currency === 'usdt' ? ' selected' : '') + '>' + t.usdt + '</option>';
+        html += '      </select>';
+        html += '      <select class="select-control" id="filter-amount-type">';
+        html += '        <option value="all"' + (state.amountType === 'all' ? ' selected' : '') + '>' + t.allAmountType + '</option>';
+        html += '        <option value="available"' + (state.amountType === 'available' ? ' selected' : '') + '>' + t.available + '</option>';
+        html += '        <option value="frozen"' + (state.amountType === 'frozen' ? ' selected' : '') + '>' + t.frozen + '</option>';
+        html += '      </select>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="section-body">';
+
+        html += '<div class="kpi-grid cols-5">';
+
+        var bal = f.latest.balance;
+        var eq = f.latest.equity;
+        var eqDiff = eq - bal;
+        var eqDiffPct = (eqDiff / bal * 100);
+
+        html += renderKpiCard({ icon: 'fa-wallet', iconColor: 'blue', label: t.balance, value: '$' + BiData.formatNumber(bal), change: (f.prevFactor - 1) * 100, changeLabel: 'vs last EOD', sub: t.usdEquivalent });
+        html += renderKpiCard({ icon: 'fa-chart-line', iconColor: 'green', label: t.equity, value: '$' + BiData.formatNumber(eq), change: eqDiffPct, changeLabel: 'vs Balance', sub: t.usdEquivalent });
+        html += renderKpiCard({ icon: 'fa-piggy-bank', iconColor: 'purple', label: t.fundingTotal, value: '$' + BiData.formatNumber(f.latest.fundingTotal), change: (f.prevFactor - 1) * 100 * 0.8, changeLabel: 'vs last EOD', sub: t.usdEquivalent });
+        html += renderKpiCard({ icon: 'fa-check-circle', iconColor: 'cyan', label: t.fundingAvailable, value: '$' + BiData.formatNumber(f.latest.fundingAvailable), change: (f.prevFactor - 1) * 100 * 0.9, changeLabel: 'vs last EOD', sub: t.usdEquivalent });
+        html += renderKpiCard({ icon: 'fa-lock', iconColor: 'orange', label: t.fundingFrozen, value: '$' + BiData.formatNumber(f.latest.fundingFrozen), change: (f.prevFactor - 1) * 100 * 0.5, changeLabel: 'vs last EOD', sub: t.usdEquivalent });
+
+        html += '</div>';
+
+        html += '<div class="chart-grid equal">';
+
+        html += '<div class="chart-card">';
+        html += '  <div class="chart-card-header">';
+        html += '    <h3 class="chart-card-title">' + t.balanceEquity + '</h3>';
+        html += '    <div class="chart-legend">';
+        html += '      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:#3B82F6;"></span>Balance</span>';
+        html += '      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:#10B981;"></span>Equity</span>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="chart-container" id="chart-bal-eq"></div>';
+        html += '</div>';
+
+        html += '<div class="chart-card">';
+        html += '  <div class="chart-card-header">';
+        html += '    <h3 class="chart-card-title">' + t.fundingBreakdown + '</h3>';
+        html += '    <div class="chart-legend">';
+        html += '      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:#8B5CF6;"></span>' + t.totalLabel + '</span>';
+        html += '      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:#22D3EE;"></span>' + t.availableLabel + '</span>';
+        html += '      <span class="chart-legend-item"><span class="chart-legend-dot" style="background:#F59E0B;"></span>' + t.frozenLabel + '</span>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '  <div class="chart-container" id="chart-funding-stack"></div>';
+        html += '</div>';
+
+        html += '</div>';
+
+        html += '<div class="chart-grid equal">';
+
+        html += '<div class="chart-card">';
+        html += '  <div class="chart-card-header"><h3 class="chart-card-title">' + t.currencyBreakdown + '</h3></div>';
+        html += '  <div class="chart-container" id="chart-currency-donut2" style="position:relative;"></div>';
+        html += '</div>';
+
+        html += '<div class="chart-card">';
+        html += '  <div class="chart-card-header"><h3 class="chart-card-title">' + t.eodTable + '</h3></div>';
+        html += '  <div class="overflow-x-auto">';
+        html += '  <table class="data-table">';
+        html += '    <thead><tr>';
+        html += '      <th>' + t.date + '</th>';
+        html += '      <th style="text-align:right;">Balance</th>';
+        html += '      <th style="text-align:right;">Equity</th>';
+        html += '      <th style="text-align:right;">Funding</th>';
+        html += '    </tr></thead>';
+        html += '    <tbody>';
+        var tableDays = Math.min(7, f.dailyBalance.length);
+        for (var i = f.dailyBalance.length - 1; i >= f.dailyBalance.length - tableDays; i--) {
+          var d = snapshot.dates[i];
+          html += '<tr>';
+          html += '  <td class="timestamp">' + BiData.formatDate(d) + '</td>';
+          html += '  <td style="text-align:right;" class="amount">$' + BiData.formatNumber(f.dailyBalance[i]) + '</td>';
+          html += '  <td style="text-align:right;" class="amount">$' + BiData.formatNumber(f.dailyEquity[i]) + '</td>';
+          html += '  <td style="text-align:right;" class="amount">$' + BiData.formatNumber(f.dailyFundingTotal[i]) + '</td>';
+          html += '</tr>';
+        }
+        html += '    </tbody>';
+        html += '  </table>';
+        html += '  </div>';
+        html += '</div>';
+
+        html += '</div>';
+        html += '</div></div>';
+
+        contentEl.innerHTML = html;
+        bindEvents();
+        setTimeout(function () { initCharts(snapshot); }, 50);
+      }
+
+      function getSnapshot() {
+        return BiData.getSnapshot(state.period, state.customStart, state.customEnd, {
+          currency: state.currency,
+          amountType: state.amountType
+        });
+      }
+
+      function renderFilterBar(snapshot) {
+        var dateQuick = ['7d', '30d', '90d'];
+        var dateLabels = { '7d': t.last7d, '30d': t.last30d, '90d': t.last90d };
+
+        var html = '';
+        html += '<div class="filter-bar">';
+        html += '<div class="date-tabs">';
+        dateQuick.forEach(function (d) {
+          html += '<div class="date-tab ' + (state.period === d ? 'active' : '') + '" data-period="' + d + '">' + dateLabels[d] + '</div>';
+        });
+        html += '</div>';
+        html += '<div style="flex:1;"></div>';
+        html += '<span style="font-size:12px;color:#64748B;">';
+        html += t.period + ': ' + BiData.formatDate(snapshot.range.start) + ' ~ ' + BiData.formatDate(snapshot.range.end) + ' (' + snapshot.days + 'd)';
+        html += '</span>';
+        html += '<button class="btn btn-refresh" id="btn-refresh"><i class="fas fa-sync-alt"></i> ' + t.refresh + '</button>';
+        html += '<button class="btn btn-reset" id="btn-reset"><i class="fas fa-redo"></i> ' + t.reset + '</button>';
+        html += '</div>';
+        return html;
+      }
+
+      function renderKpiCard(opts) {
+        var trendCls = opts.change > 0 ? 'up' : (opts.change < 0 ? 'down' : 'flat');
+        var trendIcon = opts.change > 0 ? 'fa-arrow-up' : (opts.change < 0 ? 'fa-arrow-down' : 'fa-minus');
+        var changePct = Math.abs(opts.change).toFixed(2) + '%';
+
+        var html = '';
+        html += '<div class="kpi-card">';
+        html += '  <div class="kpi-top"><div class="kpi-icon ' + opts.iconColor + '"><i class="fas ' + opts.icon + '"></i></div></div>';
+        html += '  <div class="kpi-label">' + opts.label + '</div>';
+        html += '  <div class="kpi-value">' + opts.value + '</div>';
+        html += '  <span class="kpi-trend ' + trendCls + '"><i class="fas ' + trendIcon + '"></i> ' + changePct + '</span>';
+        html += '  <span class="kpi-trend-sub">' + opts.changeLabel + '</span>';
+        if (opts.sub) html += '<div style="font-size:11px;color:#94A3B8;margin-top:4px;">' + opts.sub + '</div>';
+        html += '</div>';
+        return html;
+      }
+
+      function initCharts(snapshot) {
+        var f = snapshot.financial;
+        var dates = snapshot.dates;
+        var dateLabels = dates.map(function (d) { return BiData.formatShortDate(d); });
+
+        var balEqEl = document.getElementById('chart-bal-eq');
+        if (balEqEl) {
+          BiCharts.renderMultiLineChart(balEqEl, {
+            series: [
+              { data: f.dailyBalance, color: '#3B82F6', label: 'Balance' },
+              { data: f.dailyEquity, color: '#10B981', label: 'Equity' }
+            ],
+            labels: dateLabels,
+            valueFormatter: function (v) { return '$' + BiData.formatNumber(v); }
+          });
+        }
+
+        var fundingEl = document.getElementById('chart-funding-stack');
+        if (fundingEl) {
+          BiCharts.renderMultiLineChart(fundingEl, {
+            series: [
+              { data: f.dailyFundingTotal, color: '#8B5CF6', label: t.totalLabel },
+              { data: f.dailyFundingAvailable, color: '#22D3EE', label: t.availableLabel },
+              { data: f.dailyFundingFrozen, color: '#F59E0B', label: t.frozenLabel }
+            ],
+            labels: dateLabels,
+            valueFormatter: function (v) { return '$' + BiData.formatNumber(v); }
+          });
+        }
+
+        var donutEl = document.getElementById('chart-currency-donut2');
+        if (donutEl) {
+          var cr = f.currencyRatios;
+          var total = f.latest.balance;
+          BiCharts.renderDonutChart(donutEl, {
+            items: [
+              { label: 'USD', value: Math.round(total * cr.usd), color: '#3B82F6' },
+              { label: 'AED', value: Math.round(total * cr.aed), color: '#10B981' },
+              { label: 'USDT', value: Math.round(total * cr.usdt), color: '#8B5CF6' }
+            ],
+            centerLabel: 'Balance',
+            centerValue: '$' + BiData.formatNumber(total)
+          });
+        }
+      }
+
+      function bindEvents() {
+        var dateTabs = document.querySelectorAll('.date-tab[data-period]');
+        dateTabs.forEach(function (tab) {
+          tab.addEventListener('click', function () {
+            state.period = this.getAttribute('data-period');
+            render();
+          });
+        });
+
+        var btnRefresh = document.getElementById('btn-refresh');
+        if (btnRefresh) btnRefresh.addEventListener('click', function () { BiData.refresh(); render(); });
+
+        var btnReset = document.getElementById('btn-reset');
+        if (btnReset) btnReset.addEventListener('click', function () {
+          state = { period: '30d', customStart: '', customEnd: '', currency: 'all', amountType: 'all', collapsed: { eod: false } };
+          BiData.refresh();
+          render();
+        });
+
+        bindSelect('filter-currency', 'currency');
+        bindSelect('filter-amount-type', 'amountType');
+      }
+
+      function bindSelect(id, stateKey) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', function (e) {
+          e.stopPropagation();
+          state[stateKey] = this.value;
+          render();
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', render);
+      } else {
+        render();
+      }
+    })();
+  </script>
+</body>
+</html>

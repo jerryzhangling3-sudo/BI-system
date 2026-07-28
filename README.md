@@ -1,128 +1,117 @@
 # BI System
 
-> 一个纯静态的商业智能（BI）仪表盘前端项目，支持中英文双语。
-
-## 特性
-
-- 纯 HTML + Tailwind CSS (CDN) + FontAwesome + 原生 JavaScript
-- 无需构建工具，开箱即用
-- 中英文双语切换（成对页面）
-- 企业级深色侧栏 + 浅色内容区设计
-- 总览仪表盘含 KPI、折线图、环形图、漏斗图、排行榜、异常列表
-- 报表中心、数据源管理、指标管理三大功能模块
-
-## 快速开始
-
-### 1. 启动本地服务
-
-```bash
-# 方式一：使用启动脚本（推荐）
-./serve.sh
-
-# 方式二：直接使用 Python
-python3 -m http.server 5000
-
-# 方式三：使用 Node.js
-npx serve -l 5000 .
-```
-
-启动后访问：http://localhost:5000
-
-### 2. 切换语言
-
-- 首页：通过顶栏的「中文 / EN」按钮切换，URL 参数为 `?lang=zh` 或 `?lang=en`
-- 其他页面：通过顶栏的语言切换按钮跳转到对应语言的页面
-
-## 项目结构
-
-```
-BI-system/
-├── index.html              # 总览仪表盘（首页，单文件双语）
-├── 报表中心.html           # 报表中心（中文）
-├── reports.html            # 报表中心（英文）
-├── 数据源管理.html         # 数据源管理（中文）
-├── data-sources.html       # 数据源管理（英文）
-├── 指标管理.html           # 指标管理（中文）
-├── metrics.html            # 指标管理（英文）
-├── sidebar.js              # 侧边栏菜单与路由（唯一真相源）
-├── lang-switch.js          # 双语切换管理
-├── styles/
-│   └── main.css            # 全局样式
-├── serve.sh                # 启动脚本
-├── check-bilingual.sh      # 双语一致性检查
-├── DESIGN.md               # 设计规范
-├── AGENTS.md               # 开发规范
-└── README.md               # 本文件
-```
-
-## 页面说明
-
-### 总览仪表盘 (index.html)
-- 日期筛选器
-- 4 个核心 KPI：总收入、活跃用户、转化率、订单量
-- 收入趋势折线图（30天）
-- 渠道占比环形图
-- 地区排行榜
-- 转化漏斗图
-- 最近异常列表
-- 最近订单列表
-
-### 报表中心 (reports.html / 报表中心.html)
-- 报表分类标签页
-- 报表卡片网格展示
-- 搜索与新建功能
-- 报表状态标识（已发布/草稿/已归档）
-
-### 数据源管理 (data-sources.html / 数据源管理.html)
-- 数据源概览统计
-- 多类型数据源列表（MySQL/PostgreSQL/ClickHouse/MongoDB/Kafka/S3/API 等）
-- 连接状态监控
-- 测试/编辑/删除操作
-
-### 指标管理 (metrics.html / 指标管理.html)
-- 指标统计概览
-- 分类筛选
-- 指标列表（含定义、公式、负责人、状态、趋势）
-- 分页功能
-
-## 开发说明
-
-### 新增页面
-
-1. 在 `sidebar.js` 的 `MENU_CONFIG` 中添加菜单项
-2. 在 `lang-switch.js` 的 `BILINGUAL_PAGES` 中添加映射
-3. 创建中文 HTML 文件
-4. 创建英文 HTML 文件
-5. 运行 `./check-bilingual.sh` 验证
-
-### 双语规范
-
-- 中文文件名使用中文名，如 `报表中心.html`
-- 英文文件名使用 kebab-case，如 `reports.html`
-- 两个文件结构一致，仅文案不同
-- 首页 `index.html` 为单文件双语实现
-
-### 设计规范
-
-详见 [DESIGN.md](./DESIGN.md)
-
-### 开发规范
-
-详见 [AGENTS.md](./AGENTS.md)
+> 双语纯静态商业智能仪表盘系统，遵循 CheerCMS 工程标准。v2 版本为"经营数据中心"，包含实时经营概览与财务数据(EOD)两大模块。
 
 ## 技术栈
 
-- **HTML5** - 语义化标签
-- **Tailwind CSS CDN** - 原子化 CSS 工具类
-- **FontAwesome 6.4** - 图标库
-- **Inter 字体** - Google Fonts
-- **原生 JavaScript (ES5+)** - 无框架依赖
-- **Python http.server** - 本地静态服务
+- **纯静态**：HTML + 原生 JavaScript，无框架、无构建工具
+- **样式**：Tailwind CSS (CDN) + FontAwesome 图标 + Inter 字体
+- **数据**：全部使用虚构静态演示数据，无后端、无 API
+- **图表**：纯 SVG 自定义实现，零依赖
+
+## 快速开始
+
+### 启动本地服务
+
+```bash
+# 方式一：使用自带脚本
+./serve.sh
+
+# 方式二：直接用 Python
+python3 -m http.server 5000
+
+# 方式三：使用任何静态服务器
+npx serve .
+```
+
+然后访问 http://localhost:5000/
+
+### 双语切换
+
+- 中文首页：`index.html`
+- 英文首页：`dashboard.html`
+- 侧边栏右上角有中英文切换按钮
+
+## 页面结构
+
+| 中文页面 | 英文页面 | 路径 (activePath) | 说明 |
+|---------|---------|-------------------|------|
+| index.html | dashboard.html | `index` | 实时经营概览（客户/出入金/交易 三大板块） |
+| 财务数据.html | financial-data.html | `financial-data` | 财务数据 EOD 日终快照 |
+| 报表中心.html | reports.html | `reports` | 报表列表与管理 |
+| 数据源管理.html | data-sources.html | `data-sources` | 数据源连接管理 |
+| 指标管理.html | metrics.html | `metrics` | 业务指标定义 |
+
+## 核心文件
+
+| 文件 | 作用 |
+|------|------|
+| `sidebar.js` | 侧边栏+顶栏注入，菜单配置唯一真相源 |
+| `lang-switch.js` | 中英文页面切换管理 |
+| `bi-data.js` | 模拟数据生成器（带种子，会话内数据一致） |
+| `bi-charts.js` | 纯 SVG 图表库（折线/条形/环形/漏斗/双轴） |
+| `styles/main.css` | 全局样式扩展 |
 
 ## 数据说明
 
-本项目中所有数据均为静态演示数据，完全虚构，不包含任何真实客户信息。
-数据仅用于展示界面效果和交互逻辑。
+### 实时数据口径 (Real-time Snapshot)
+- 每次页面加载或点击"刷新快照"时生成新数据
+- 同一次会话中，筛选维度变化时数据保持联动一致
+- 包含客户数据、出入金数据、交易数据三大板块
+
+### 财务数据口径 (EOD Snapshot)
+- EOD = End of Day，每日 23:59:59 服务器时间快照
+- 包含 Balance、Equity、Funding Balance 等财务指标
+- 币种：USD / AED / USDT
+
+### 业务约束
+- 客户漏斗：注册 ≥ KYC ≥ 开户 ≥ 首次入金 ≥ 交易
+- 净入金 = 入金金额 - 出金金额
+- Funding 总额 = 可用 + 冻结
+- Equity 与 Balance 接近（差异约 1~3%）
+
+> **所有数据均为虚构演示数据，不包含任何真实客户信息。**
+
+## 开发规范
+
+详见 [AGENTS.md](AGENTS.md)
+
+### 新增页面
+
+1. 在 `sidebar.js` 的 `MENU_CONFIG` 中注册菜单项
+2. 在 `lang-switch.js` 的 `BILINGUAL_PAGES` 中添加映射
+3. 创建中文和英文两个 HTML 文件
+4. 运行 `./check-bilingual.sh` 验证
+
+### 提交前检查
+
+```bash
+# 双语一致性检查
+./check-bilingual.sh
+
+# JS 语法检查
+node -c sidebar.js
+node -c lang-switch.js
+node -c bi-data.js
+node -c bi-charts.js
+```
+
+## 设计规范
+
+详见 [DESIGN.md](DESIGN.md)
+
+核心视觉：
+- 侧栏：深色 `#0B1120`
+- 主色：蓝色 `#3B82F6`
+- 内容背景：浅灰 `#F8FAFC`
+- 卡片：`rounded-xl shadow-sm border border-slate-200`
+- 金额/时间/ID 使用等宽字体
+
+## 响应式
+
+- 桌面端：1440px 及以上（最优体验）
+- 窄屏：1024px（侧栏收起 + 内容自适应）
+- 移动端：1024px 以下内容区可横向滚动
 
 ## License
 

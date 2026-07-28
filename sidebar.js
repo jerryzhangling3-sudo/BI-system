@@ -18,16 +18,24 @@
     sections: [
       {
         id: 'main',
-        zhLabel: '主要功能',
-        enLabel: 'Main',
+        zhLabel: '数据中心',
+        enLabel: 'Data Center',
         items: [
           {
             path: 'index',
-            zhLabel: '总览仪表盘',
-            enLabel: 'Overview Dashboard',
+            zhLabel: '实时经营概览',
+            enLabel: 'Real-time Overview',
             icon: 'fa-chart-line',
             zhFile: 'index.html',
-            enFile: 'index.html' // 首页中英文同一入口，内部切换
+            enFile: 'dashboard.html'
+          },
+          {
+            path: 'financial-data',
+            zhLabel: '财务数据',
+            enLabel: 'Financial Data',
+            icon: 'fa-coins',
+            zhFile: '财务数据.html',
+            enFile: 'financial-data.html'
           },
           {
             path: 'reports',
@@ -79,14 +87,14 @@
   const I18N = {
     zh: {
       brand: 'BI System',
-      brandSub: '商业智能平台',
+      brandSub: '经营数据中心',
       searchPlaceholder: '搜索...',
       settings: '设置',
       notifications: '通知'
     },
     en: {
       brand: 'BI System',
-      brandSub: 'Business Intelligence',
+      brandSub: 'Business Data Center',
       searchPlaceholder: 'Search...',
       settings: 'Settings',
       notifications: 'Notifications'
@@ -126,6 +134,7 @@
     html += '      </div>';
     html += '      <div>';
     html += '        <div class="sidebar-logo-text">' + t.brand + '</div>';
+    html += '        <div class="sidebar-logo-sub">' + t.brandSub + '</div>';
     html += '      </div>';
     html += '    </div>';
 
@@ -224,12 +233,6 @@
     var zhHref = targetItem ? targetItem.zhFile : '#';
     var enHref = targetItem ? targetItem.enFile : '#';
 
-    // 首页特殊处理：index.html 内通过 lang 参数切换
-    if (activePath === 'index') {
-      zhHref = 'index.html?lang=zh';
-      enHref = 'index.html?lang=en';
-    }
-
     var html = '';
     html += '<div class="lang-switch">';
     html += '  <a href="' + zhHref + '" class="' + (currentLang === 'zh' ? 'active' : '') + '">中文</a>';
@@ -247,23 +250,15 @@
   }
 
   /**
-   * 从 URL 获取当前语言（优先 query 参数，其次从文件名判断）
+   * 从 URL 获取当前语言（从文件名判断）
    */
   function detectLang() {
-    // 1. URL query 参数 ?lang=zh/en
-    var params = new URLSearchParams(window.location.search);
-    var langParam = params.get('lang');
-    if (langParam === 'zh' || langParam === 'en') return langParam;
-
-    // 2. 从文件名判断
     var filename = window.location.pathname.split('/').pop() || 'index.html';
-    var isZhFile = /[\u4e00-\u9fa5]/.test(filename); // 含中文字符
-    if (isZhFile) return 'zh';
-
-    // 3. 默认英文文件名（除首页外）
+    // 中文文件名（含中文字符）
+    if (/[\u4e00-\u9fa5]/.test(filename)) return 'zh';
+    // 英文文件名（除首页 index.html 外）
     if (filename !== 'index.html' && filename !== '') return 'en';
-
-    // 4. 首页默认中文
+    // 首页默认中文
     return 'zh';
   }
 
@@ -273,6 +268,7 @@
   function detectActivePath() {
     var filename = window.location.pathname.split('/').pop() || 'index.html';
     if (filename === 'index.html' || filename === '') return 'index';
+    if (filename === 'dashboard.html') return 'index';
 
     // 遍历菜单配置查找匹配
     var found = null;
