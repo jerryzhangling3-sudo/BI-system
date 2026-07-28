@@ -1,5 +1,13 @@
 # BI System
 
+## v3 information architecture
+
+- Primary navigation: **Base Data / 基础数据**
+- Secondary navigation: **User Data / 用户数据**, **Deposit & Withdrawal / 出入金数据**, **Trading Data / 交易数据**, **Financial Data / 财务数据**
+- The Base Data landing page provides four clickable overview cards and its own time-range control.
+- Every secondary data view has an independent time-range control and dimension filters.
+- Data is regenerated on page load or explicit refresh; all values are fictional demo data.
+
 > 双语纯静态商业智能仪表盘系统，遵循 CheerCMS 工程标准。v2 版本为"经营数据中心"，包含实时经营概览与财务数据(EOD)两大模块。
 
 ## 技术栈

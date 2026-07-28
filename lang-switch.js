@@ -20,6 +20,9 @@
   const BILINGUAL_PAGES = {
     // 首页（实时经营概览）
     'index.html': 'dashboard.html',
+    '用户数据.html': 'customer-data.html',
+    '出入金数据.html': 'funding-data.html',
+    '交易数据.html': 'trading-data.html',
     // 财务数据
     '财务数据.html': 'financial-data.html',
     // 报表中心

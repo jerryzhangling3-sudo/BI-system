@@ -17,17 +17,37 @@
   const MENU_CONFIG = {
     sections: [
       {
-        id: 'main',
-        zhLabel: '数据中心',
-        enLabel: 'Data Center',
+        id: 'base-data',
+        zhLabel: '基础数据',
+        enLabel: 'Base Data',
+        path: 'base-data',
+        icon: 'fa-layer-group',
+        zhFile: 'index.html',
+        enFile: 'dashboard.html',
         items: [
           {
-            path: 'index',
-            zhLabel: '实时经营概览',
-            enLabel: 'Real-time Overview',
-            icon: 'fa-chart-line',
-            zhFile: 'index.html',
-            enFile: 'dashboard.html'
+            path: 'customer-data',
+            zhLabel: '用户数据',
+            enLabel: 'User Data',
+            icon: 'fa-users',
+            zhFile: '用户数据.html',
+            enFile: 'customer-data.html'
+          },
+          {
+            path: 'funding-data',
+            zhLabel: '出入金数据',
+            enLabel: 'Deposit & Withdrawal',
+            icon: 'fa-money-bill-transfer',
+            zhFile: '出入金数据.html',
+            enFile: 'funding-data.html'
+          },
+          {
+            path: 'trading-data',
+            zhLabel: '交易数据',
+            enLabel: 'Trading Data',
+            icon: 'fa-chart-candlestick',
+            zhFile: '交易数据.html',
+            enFile: 'trading-data.html'
           },
           {
             path: 'financial-data',
@@ -36,14 +56,6 @@
             icon: 'fa-coins',
             zhFile: '财务数据.html',
             enFile: 'financial-data.html'
-          },
-          {
-            path: 'reports',
-            zhLabel: '报表中心',
-            enLabel: 'Reports Center',
-            icon: 'fa-file-alt',
-            zhFile: '报表中心.html',
-            enFile: 'reports.html'
           }
         ]
       },
@@ -52,6 +64,14 @@
         zhLabel: '数据管理',
         enLabel: 'Data Management',
         items: [
+          {
+            path: 'reports',
+            zhLabel: '报表中心',
+            enLabel: 'Reports Center',
+            icon: 'fa-file-alt',
+            zhFile: '报表中心.html',
+            enFile: 'reports.html'
+          },
           {
             path: 'data-sources',
             zhLabel: '数据源管理',
@@ -142,16 +162,24 @@
     html += '    <nav class="sidebar-menu">';
     MENU_CONFIG.sections.forEach(function (section) {
       var sectionLabel = lang === 'zh' ? section.zhLabel : section.enLabel;
-      html += '      <div class="sidebar-section-label">' + sectionLabel + '</div>';
+      if (section.path) {
+        var sectionHref = lang === 'zh' ? section.zhFile : section.enFile;
+        var sectionActive = section.path === activePath ? ' active' : '';
+        html += '      <a href="' + sectionHref + '" class="sidebar-primary' + sectionActive + '"><i class="fas ' + section.icon + '"></i><span>' + sectionLabel + '</span><i class="fas fa-chevron-down sidebar-primary-arrow"></i></a>';
+        html += '      <div class="sidebar-submenu">';
+      } else {
+        html += '      <div class="sidebar-section-label">' + sectionLabel + '</div>';
+      }
       section.items.forEach(function (item) {
         var itemLabel = lang === 'zh' ? item.zhLabel : item.enLabel;
         var isActive = item.path === activePath ? ' active' : '';
         var href = buildHref(item, lang);
-        html += '      <a href="' + href + '" class="sidebar-item' + isActive + '" data-path="' + item.path + '">';
+        html += '      <a href="' + href + '" class="sidebar-item' + isActive + (section.path ? ' sidebar-subitem' : '') + '" data-path="' + item.path + '">';
         html += '        <i class="fas ' + item.icon + '"></i>';
         html += '        <span>' + itemLabel + '</span>';
         html += '      </a>';
       });
+      if (section.path) html += '      </div>';
     });
     html += '    </nav>';
 
@@ -189,6 +217,9 @@
     // 找到当前页面标题
     var pageTitle = '';
     MENU_CONFIG.sections.forEach(function (section) {
+      if (section.path === activePath) {
+        pageTitle = lang === 'zh' ? section.zhLabel : section.enLabel;
+      }
       section.items.forEach(function (item) {
         if (item.path === activePath) {
           pageTitle = lang === 'zh' ? item.zhLabel : item.enLabel;
@@ -225,6 +256,9 @@
     // 找到对应菜单项
     var targetItem = null;
     MENU_CONFIG.sections.forEach(function (section) {
+      if (section.path === activePath) {
+        targetItem = section;
+      }
       section.items.forEach(function (item) {
         if (item.path === activePath) targetItem = item;
       });
