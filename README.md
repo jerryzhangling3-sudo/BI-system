@@ -1,5 +1,11 @@
 # BI System
 
+## 最终交付版本
+
+- [`BI-System-Standalone.html`](BI-System-Standalone.html)：当前最终版单文件 BI 系统原型，直接用浏览器打开即可使用。
+- [`Cheer_Trade_BI系统需求文档_V1.3.9.docx`](Cheer_Trade_BI系统需求文档_V1.3.9.docx)：与最终原型对应的需求文档。
+- 原有多页面版本继续保留，便于后续对照和工程化拆分。
+
 ## v3 information architecture
 
 - Primary navigation: **Base Data / 基础数据**
